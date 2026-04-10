@@ -26,3 +26,16 @@ frontend/dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# PyCharm
+ai-server/.idea/
+
+# pycache
+ai-server/app/__pycache__/
+
+# Gradle 로컬 설정
+backend/gradle.properties
+
+# Spring Boot yaml
+backend/src/main/resources/application.yaml
+backend/src/main/resources/application.yml

@@ -39,3 +39,6 @@ backend/gradle.properties
 # Spring Boot yaml
 backend/src/main/resources/application.yaml
 backend/src/main/resources/application.yml
+
+# QueryDSL 자동 생성 파일
+backend/src/main/generated/

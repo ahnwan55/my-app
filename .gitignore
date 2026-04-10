@@ -1,0 +1,28 @@
+# 환경변수
+.env
+
+# Spring Boot
+backend/src/main/resources/application.yml
+backend/src/main/resources/application-prod.yml
+
+# Python
+ai-server/venv/
+ai-server/__pycache__/
+ai-server/**/__pycache__/
+ai-server/**/*.pyc
+
+# Gradle
+backend/.gradle/
+backend/build/
+
+# IntelliJ
+.idea/
+*.iml
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -23,7 +23,7 @@ public class SurveySession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 익명 사용자 식별용 UUID (프론트에서 생성해서 전달)
+    // 익명 사용자 식별용 UUID
     @Column(nullable = false, unique = true)
     private String sessionUuid;
 
@@ -56,6 +56,7 @@ public class SurveySession {
     private List<SurveyAnswer> answers = new ArrayList<>();
 
     // 설문 완료 후 페르소나 결정 메서드
+    // totalScore 기반으로 분류된 personaType 저장
     public void completeWithPersona(int totalScore, PersonaType personaType) {
         this.totalScore = totalScore;
         this.personaType = personaType;

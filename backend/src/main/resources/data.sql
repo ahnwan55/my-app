@@ -1,9 +1,12 @@
--- 페르소나 타입
-INSERT INTO persona_type (name, description, risk_level, min_score, max_score)
+-- 페르소나 타입 (6가지 유형)
+INSERT INTO persona_type (code, name)
 VALUES
-  ('안정 추구형', '원금 보장을 최우선으로 하는 보수적 성향', 'LOW', 0, 10),
-  ('균형 추구형', '수익과 안정성의 균형을 원하는 성향', 'MEDIUM', 11, 20),
-  ('수익 추구형', '다소 리스크를 감수하더라도 높은 수익을 원하는 성향', 'HIGH', 21, 30);
+  ('SAFETY_GUARD',     '철벽 수비대'),
+  ('GOAL_ACHIEVER',    '목표 달성러'),
+  ('RATE_OPTIMIZER',   '알뜰 최적화러'),
+  ('STEADY_WORKER',    '안정 추구 직장인'),
+  ('BALANCED_SPENDER', '감성 소비 저축러'),
+  ('FUTURE_PLANNER',   '미래 설계자');
 
 -- 설문지
 INSERT INTO survey (title, is_active)

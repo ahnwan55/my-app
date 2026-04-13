@@ -2,7 +2,9 @@ package com.example.demo.domain.product.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import org.hibernate.annotations.UpdateTimestamp;
+
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -43,6 +45,7 @@ public class Product {
     // 우대 조건
     @Column(columnDefinition = "TEXT")
     private String spclCnd;
+
 
     // 가입 제한
     private String joinDeny;

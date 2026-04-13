@@ -54,4 +54,5 @@ public class RecommendRule {
     public boolean isValidTermRange() {
         return minTermMonths <= maxTermMonths;
     }
+
 }

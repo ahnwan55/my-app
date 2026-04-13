@@ -2,6 +2,7 @@ package com.example.demo.domain.product.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ public class Product {
 
     // 우대 조건
     @Column(columnDefinition = "TEXT")
-    private String spcl_cnd;
+    private String spclCnd;
 
     // 가입 제한
     private String joinDeny;
@@ -56,6 +57,7 @@ public class Product {
     private String dclsMonth;
 
     // 데이터 변경 감지용 해시값
+    @UpdateTimestamp        // 자동 갱신
     private String dataHash;
 
     // 현재 판매 중 여부

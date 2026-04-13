@@ -16,9 +16,9 @@ public class PersonaType {
     private Long id;
 
     // 프론트 API 호출용 의미있는 코드
-    // 예: SAFETY_GUARD, GOAL_ACHIEVER 등
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, unique = true)
-    private String code;
+    private PersonaCode code;
 
     // 페르소나 표시 이름 (예: 철벽 수비대)
     @Column(nullable = false)

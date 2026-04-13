@@ -10,11 +10,16 @@ spring:
       enabled: true
       path: /h2-console
 
+  sql:
+    init:
+      mode: never        # ← data.sql 실행 끔 (Entity 완성 전까지)
+
   jpa:
     hibernate:
       ddl-auto: create-drop
     show-sql: true
-    database-platform: org.hibernate.dialect.H2Dialect
+    defer-datasource-initialization: true
+    open-in-view: false  # ← 경고 제거
 
 ai-server:
   url: http://localhost:8000
@@ -23,7 +28,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info   # 로컬에서 health만 노출
+        include: health, info
   endpoint:
     health:
       show-details: always

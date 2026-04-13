@@ -1,0 +1,26 @@
+# 빌드 산출물 (이미 Stage 1에서 생성하므로 불필요)
+build/
+.gradle/
+
+# 운영 환경 설정 — 절대 이미지에 포함되면 안 됨
+src/main/resources/application-prod.yml
+src/main/resources/application-staging.yml
+*.env
+.env*
+
+# IDE 설정
+.idea/
+.vscode/
+*.iml
+
+# Git
+.git/
+.gitignore
+
+# 문서
+README.md
+docs/
+
+# 테스트 코드는 런타임 이미지에 불필요
+# (builder stage에선 사용되지만 runtime에는 포함 안 됨)
+src/test/

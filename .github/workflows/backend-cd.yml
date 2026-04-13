@@ -18,7 +18,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '21'
-          distribution: 'corretto'
+          distribution: 'microsoft'
 
       - name: Grant execute permission for gradlew
         working-directory: ./backend

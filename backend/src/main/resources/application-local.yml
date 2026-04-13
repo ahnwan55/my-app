@@ -12,7 +12,7 @@ spring:
 
   sql:
     init:
-      mode: never        # ← data.sql 실행 끔 (Entity 완성 전까지)
+      mode: always
 
   jpa:
     hibernate:

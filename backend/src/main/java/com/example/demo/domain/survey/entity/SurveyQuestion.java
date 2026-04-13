@@ -2,9 +2,11 @@ package com.example.demo.domain.survey.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+
 
 @Entity
 @Table(name = "survey_question")

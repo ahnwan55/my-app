@@ -41,4 +41,5 @@ public class Survey {
     public void deactivate() {
         this.isActive = false;
     }
+
 }

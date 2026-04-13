@@ -27,6 +27,7 @@ public class ProductOption {
     @Column(nullable = false)
     private RateType intrRateType;
 
+
     // 저축 기간 (개월)
     @Column(nullable = false)
     private Integer saveTrm;

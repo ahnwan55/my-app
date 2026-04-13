@@ -31,4 +31,14 @@ public class Survey {
     @OrderBy("orderNum ASC")
     @Builder.Default
     private List<SurveyQuestion> questions = new ArrayList<>();
+
+    // 설문 활성화
+    public void activate() {
+        this.isActive = true;
+    }
+
+    // 설문 비활성화
+    public void deactivate() {
+        this.isActive = false;
+    }
 }

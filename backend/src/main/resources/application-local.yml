@@ -19,7 +19,7 @@ spring:
       ddl-auto: create-drop
     show-sql: true
     defer-datasource-initialization: true
-    open-in-view: false  # ← 경고 제거
+    open-in-view: false
 
 ai-server:
   url: http://localhost:8000

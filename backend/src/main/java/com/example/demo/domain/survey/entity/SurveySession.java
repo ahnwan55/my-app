@@ -37,6 +37,11 @@ public class SurveySession {
     @Builder.Default
     private Boolean isCompleted = false;
 
+    // 이미 완료된 세션인지 확인
+    public boolean isAlreadyCompleted() {
+        return this.isCompleted;
+    }
+
     // 총 점수 (페르소나 분류에 사용)
     private Integer totalScore;
 

@@ -23,8 +23,10 @@ public class ProductOption {
     private Product product;
 
     // 금리 유형 (단리/복리)
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String intrRateType;
+    private RateType intrRateType;
+
 
     // 저축 기간 (개월)
     @Column(nullable = false)

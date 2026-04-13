@@ -50,4 +50,9 @@ public class RecommendRule {
     // 추천 우선순위 (숫자 낮을수록 높은 우선순위)
     @Column(nullable = false)
     private Integer priority;
+
+    public boolean isValidTermRange() {
+        return minTermMonths <= maxTermMonths;
+    }
+
 }

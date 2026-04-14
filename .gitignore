@@ -11,6 +11,7 @@ docker-compose.override.yml
 # ──────────────────────────────
 backend/src/main/resources/application.yml
 backend/src/main/resources/application-prod.yml
+backend/src/main/resources/application-local.yml
 backend/src/main/resources/application-staging.yml
 backend/src/test/resources/application-test.yml
 backend/logs/

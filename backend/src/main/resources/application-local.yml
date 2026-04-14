@@ -35,3 +35,6 @@ management:
   endpoint:
     health:
       show-details: always
+
+fss:
+  api-key: a714fc2b2d84a61f4f673cd0850b5d87

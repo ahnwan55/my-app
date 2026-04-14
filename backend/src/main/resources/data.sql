@@ -30,26 +30,26 @@ VALUES
 -- 추천 규칙 (페르소나별)
 -- STEADY_WORKER: 장기 적금, 복리, 12개월 이상, 금리 3% 이상
 INSERT INTO recommend_rule (persona_type_id, product_type, rate_type, min_term_months, max_term_months, min_rate, priority)
-SELECT id, 'SAVING', 'M', 12, 36, 3.00, 1 FROM persona_type WHERE code = 'STEADY_WORKER';
+SELECT id, 'SAVING', 'M', 12, 36, 1.00, 1 FROM persona_type WHERE code = 'STEADY_WORKER';
 
 -- SAFETY_GUARD: 단기 예금, 단리, 6개월 이상
 INSERT INTO recommend_rule (persona_type_id, product_type, rate_type, min_term_months, max_term_months, min_rate, priority)
-SELECT id, 'DEPOSIT', 'S', 6, 24, 3.00, 1 FROM persona_type WHERE code = 'SAFETY_GUARD';
+SELECT id, 'DEPOSIT', 'S', 6, 24, 1.00, 1 FROM persona_type WHERE code = 'SAFETY_GUARD';
 
 -- RATE_OPTIMIZER: 예금/적금 모두, 단리, 우대금리 높은 것
 INSERT INTO recommend_rule (persona_type_id, product_type, rate_type, min_term_months, max_term_months, min_rate, priority)
-SELECT id, 'DEPOSIT', 'S', 6, 36, 3.50, 1 FROM persona_type WHERE code = 'RATE_OPTIMIZER';
+SELECT id, 'DEPOSIT', 'S', 6, 36, 1.00, 1 FROM persona_type WHERE code = 'RATE_OPTIMIZER';
 INSERT INTO recommend_rule (persona_type_id, product_type, rate_type, min_term_months, max_term_months, min_rate, priority)
-SELECT id, 'SAVING', 'S', 6, 36, 3.50, 2 FROM persona_type WHERE code = 'RATE_OPTIMIZER';
+SELECT id, 'SAVING', 'S', 6, 36, 1.00, 2 FROM persona_type WHERE code = 'RATE_OPTIMIZER';
 
 -- GOAL_ACHIEVER: 단기 적금, 목표 달성용
 INSERT INTO recommend_rule (persona_type_id, product_type, rate_type, min_term_months, max_term_months, min_rate, priority)
-SELECT id, 'SAVING', 'S', 6, 12, 3.00, 1 FROM persona_type WHERE code = 'GOAL_ACHIEVER';
+SELECT id, 'SAVING', 'S', 6, 12, 1.00, 1 FROM persona_type WHERE code = 'GOAL_ACHIEVER';
 
 -- BALANCED_SPENDER: 중기 예금
 INSERT INTO recommend_rule (persona_type_id, product_type, rate_type, min_term_months, max_term_months, min_rate, priority)
-SELECT id, 'DEPOSIT', 'S', 6, 12, 3.00, 1 FROM persona_type WHERE code = 'BALANCED_SPENDER';
+SELECT id, 'DEPOSIT', 'S', 6, 12, 1.00, 1 FROM persona_type WHERE code = 'BALANCED_SPENDER';
 
 -- FUTURE_PLANNER: 장기 복리 예금
 INSERT INTO recommend_rule (persona_type_id, product_type, rate_type, min_term_months, max_term_months, min_rate, priority)
-SELECT id, 'DEPOSIT', 'M', 24, 36, 3.20, 1 FROM persona_type WHERE code = 'FUTURE_PLANNER';
+SELECT id, 'DEPOSIT', 'M', 24, 36, 1.00, 1 FROM persona_type WHERE code = 'FUTURE_PLANNER';

@@ -39,7 +39,7 @@ public class FssScheduler {
      *
      * TODO: API 키 발급 후 @Scheduled 주석 해제
      */
-    // @Scheduled(cron = "0 0 2 * * *")
+    @Scheduled(cron = "0 0 2 * * *")
     public void collectFinancialProducts() {
         log.info("[FssScheduler] 금융 상품 데이터 수집 시작");
         try {
@@ -63,7 +63,7 @@ public class FssScheduler {
      *
      * TODO: API 키 발급 후 @Scheduled 주석 해제
      */
-    // @Scheduled(initialDelay = 10_000, fixedDelay = Long.MAX_VALUE)
+    @Scheduled(initialDelay = 10_000, fixedDelay = Long.MAX_VALUE)
     public void initialLoad() {
         log.info("[FssScheduler] 초기 금융 상품 데이터 적재 시작");
         collectFinancialProducts();

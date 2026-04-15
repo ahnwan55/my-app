@@ -1,7 +1,6 @@
 from fastapi import APIRouter
-from app.schemas import AnalyzeRequest, RecommendRequest, PersonaRequest, PersonaResponse
+from app.schemas import RecommendRequest
 from app.ollama_client import chat
-from app.ml_model import predict_persona
 
 router = APIRouter()
 
@@ -55,30 +54,3 @@ async def recommend(req: RecommendRequest):
     """
     result = await chat(prompt)
     return {"result": result}
-
-
-@router.post("/persona", response_model=PersonaResponse)
-def classify_persona(req: PersonaRequest):
-    """
-    XGBoost 페르소나 분류 엔드포인트
-
-    호출 흐름:
-      Spring Boot SurveyService (설문 완료 시)
-        → POST /persona
-        → XGBoost 모델로 6개 페르소나 중 1개 분류
-        → SHAP으로 "왜 이 페르소나인지" 근거 계산
-        → PersonaResponse 반환
-        → Spring Boot가 SurveySession.personaType에 저장
-
-    SHAP 활용:
-      프론트엔드에서 "당신이 SAFETY_GUARD인 이유는 저축 성향이 높기 때문입니다"
-      같은 XAI(설명 가능한 AI) 메시지 표시에 사용
-    """
-    result = predict_persona(
-        age=req.age,
-        income=req.income,
-        savings_rate=req.savings_rate,
-        risk_score=req.risk_score,
-        goal_term=req.goal_term,
-    )
-    return PersonaResponse(**result)

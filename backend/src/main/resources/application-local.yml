@@ -2,18 +2,15 @@ spring:
   datasource:
     url: jdbc:h2:mem:devdb;MODE=PostgreSQL;NON_KEYWORDS=VALUE
     driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
   h2:
     console:
       enabled: true
       path: /h2-console
-
   sql:
     init:
       mode: always
-
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -37,9 +34,9 @@ management:
       show-details: always
 
 fss:
-  api-key: ${FSS_API_KEY:temp-key-reissue-needed}
+  api-key: ${FSS_API_KEY}
 
 jwt:
-  secret: ${JWT_SECRET:local-dev-secret-key-must-be-at-least-32-bytes-long}
+  secret: ${JWT_SECRET}
   access-expiration: 1800000
   refresh-expiration: 604800000

@@ -9,7 +9,6 @@ docker-compose.override.yml
 # ──────────────────────────────
 # Spring Boot
 # ──────────────────────────────
-backend/src/main/resources/application.yml
 backend/src/main/resources/application-prod.yml
 backend/src/main/resources/application-local.yml
 backend/src/main/resources/application-staging.yml
@@ -78,3 +77,9 @@ ai-server/.idea/
 # ──────────────────────────────
 .DS_Store
 Thumbs.db
+
+# ──────────────────────────────
+# 로컬 환경 설정 (민감정보 포함)
+# ──────────────────────────────
+**/application-local.yml
+**/application-local.yaml

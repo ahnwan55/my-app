@@ -32,7 +32,7 @@ export default function LoadingPage({ onComplete }) {
 
   useEffect(() => {
     if (stepIndex === LOADING_STEPS.length - 1) {
-      const t = setTimeout(() => { setDone(true); setTimeout(() => onComplete && onComplete(), 600); }, 1400);
+      const t = setTimeout(() => { setDone(true); setTimeout(() => onComplete && onComplete("EXPLORER", "지적 탐험가"), 600); }, 1400);
       return () => clearTimeout(t);
     }
   }, [stepIndex, onComplete]);

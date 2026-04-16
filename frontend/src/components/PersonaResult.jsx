@@ -1,46 +1,46 @@
 import { useState, useEffect } from "react";
 
 const personas = {
-  SAFETY_GUARD: {
-    icon: "🛡️",
-    name: "안전 수호자",
-    tagline: "~ 안정 속에서 피어나는 독서가 ~",
-    description: "당신은 깊고 신중한 독서가입니다. 검증된 고전과 묵직한 인문학 서적을 즐기며, 한 권을 읽더라도 충분히 곱씹고 이해하는 스타일입니다.",
-  },
-  STEADY_WORKER: {
-    icon: "📚",
-    name: "꾸준한 탐독가",
-    tagline: "~ 매일 한 페이지, 쌓이는 지혜 ~",
-    description: "당신은 습관의 힘을 믿는 독서가입니다. 바쁜 일상 속에서도 꾸준히 책을 손에 잡고, 자기계발서와 실용서를 통해 성장하는 것을 즐깁니다.",
-  },
-  BALANCED_SPENDER: {
-    icon: "⚖️",
-    name: "균형 탐험가",
-    tagline: "~ 장르의 경계를 자유롭게 ~",
-    description: "당신은 다양한 장르를 넘나드는 독서가입니다. 소설과 비소설을 번갈아 읽으며 균형 잡힌 시각을 키웁니다.",
-  },
-  RATE_OPTIMIZER: {
-    icon: "⚡",
-    name: "속독 최적화자",
-    tagline: "~ 더 많이, 더 빠르게, 더 깊게 ~",
-    description: "당신은 효율을 추구하는 독서가입니다. 핵심을 빠르게 파악하고 많은 책을 읽는 것을 목표로 합니다.",
-  },
-  GOAL_ACHIEVER: {
-    icon: "🎯",
-    name: "목표 달성자",
-    tagline: "~ 읽는 것이 곧 전략이다 ~",
-    description: "당신은 목적 지향적인 독서가입니다. 현재 목표와 직결된 책을 선택하고, 독서를 통해 구체적인 성과를 얻고자 합니다.",
-  },
-  FUTURE_PLANNER: {
+  EXPLORER: {
     icon: "🔭",
-    name: "미래 설계자",
-    tagline: "~ 오늘의 독서가 내일의 나를 만든다 ~",
-    description: "당신은 미래를 바라보는 독서가입니다. 트렌드와 미래 기술, 사회 변화를 다루는 책에 관심이 많습니다.",
+    name: "지적 탐험가",
+    tagline: "~ 새로운 지식을 파헤치는 지적 탐험가형 ~",
+    description: "배경지식 확장에 관심이 많고, 인문·과학·역사 분야를 즐겨 읽습니다. '왜?'라는 질문을 멈추지 않으며, 책을 통해 세상을 더 깊이 이해하려는 탐구형 독자입니다.",
+  },
+  CURATOR: {
+    icon: "🌸",
+    name: "감성 수집가",
+    tagline: "~ 문장의 온도를 모으는 감성 수집가형 ~",
+    description: "분위기, 문장, 감정에 몰입하는 독자입니다. 여운 남는 글을 좋아하고 감정 이입이 깊으며, 소설·시집·에세이에서 삶의 온기를 발견합니다.",
+  },
+  NAVIGATOR: {
+    icon: "⚓",
+    name: "현실 항해사",
+    tagline: "~ 책에서 해답을 찾는 현실 항해사형 ~",
+    description: "실용성을 중시하고 읽은 것을 바로 행동으로 옮기는 목표 지향적 독자입니다. 자기계발서와 경제·경영서에서 삶의 나침반을 찾습니다.",
+  },
+  DWELLER: {
+    icon: "☕",
+    name: "안식처 거주자",
+    tagline: "~ 책 속에서 쉬어가는 안식처 거주형 ~",
+    description: "힐링과 위로 중심의 독서를 즐기는 독자입니다. 편안한 감정을 선호하며, 판타지와 힐링 소설 속에서 일상의 피로를 내려놓습니다.",
+  },
+  ANALYST: {
+    icon: "♟️",
+    name: "비판적 관찰자",
+    tagline: "~ 숨겨진 의미를 파헤치는 비판적 관찰자형 ~",
+    description: "논리 구조를 분석하고 반전과 추리를 즐기는 독자입니다. 사회 이슈에 관심이 많으며, 추리·스릴러·사회비평에서 날카로운 시각을 키웁니다.",
+  },
+  DIVER: {
+    icon: "🌊",
+    name: "사색 잠수형",
+    tagline: "~ 깊이 사유하는 사색 잠수형 ~",
+    description: "천천히 곱씹으며 읽고, 철학적 질문을 즐기는 독자입니다. 혼자 생각하는 시간을 소중히 여기며, 철학·인문 에세이에서 삶의 의미를 탐색합니다.",
   },
 };
 
-export default function PersonaResult({ personaCode = "GOAL_ACHIEVER", onViewBooks }) {
-  const persona = personas[personaCode] || personas["GOAL_ACHIEVER"];
+export default function PersonaResult({ personaCode = "EXPLORER", onViewBooks }) {
+  const persona = personas[personaCode] || personas["EXPLORER"];
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -49,31 +49,31 @@ export default function PersonaResult({ personaCode = "GOAL_ACHIEVER", onViewBoo
   }, []);
 
   return (
-    <div style={styles.page}>
-      <div style={{ ...styles.card, opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.6s ease, transform 0.6s ease" }}>
-        <p style={styles.subtitle}>당신의 페르소나는...</p>
-        <div style={styles.iconWrapper}>
-          <div style={styles.iconBox}>
-            <span style={styles.icon}>{persona.icon}</span>
+      <div style={styles.page}>
+        <div style={{ ...styles.card, opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.6s ease, transform 0.6s ease" }}>
+          <p style={styles.subtitle}>당신의 페르소나는...</p>
+          <div style={styles.iconWrapper}>
+            <div style={styles.iconBox}>
+              <span style={styles.icon}>{persona.icon}</span>
+            </div>
+            <p style={styles.personaName}>{persona.name}</p>
           </div>
-          <p style={styles.personaName}>{persona.name}</p>
+          <p style={styles.tagline}>{persona.tagline}</p>
+          <div style={styles.divider} />
+          <div style={styles.descBox}>
+            <p style={styles.descTitle}>페르소나 설명</p>
+            <p style={styles.descText}>{persona.description}</p>
+          </div>
+          <button
+              style={styles.button}
+              onClick={onViewBooks}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#000"; e.currentTarget.style.color = "#fff"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = "#000"; }}
+          >
+            추천 도서 보러가기
+          </button>
         </div>
-        <p style={styles.tagline}>{persona.tagline}</p>
-        <div style={styles.divider} />
-        <div style={styles.descBox}>
-          <p style={styles.descTitle}>페르소나 설명</p>
-          <p style={styles.descText}>{persona.description}</p>
-        </div>
-        <button
-          style={styles.button}
-          onClick={onViewBooks}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "#000"; e.currentTarget.style.color = "#fff"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = "#000"; }}
-        >
-          추천 도서 보기
-        </button>
       </div>
-    </div>
   );
 }
 

@@ -4,7 +4,6 @@ const LOADING_STEPS = [
   "설문 응답을 분석하고 있습니다...",
   "독서 성향을 파악하고 있습니다...",
   "페르소나 유형을 분류하고 있습니다...",
-  "맞춤 도서를 선별하고 있습니다...",
 ];
 
 export default function LoadingPage({ onComplete }) {
@@ -39,52 +38,52 @@ export default function LoadingPage({ onComplete }) {
   }, [stepIndex, onComplete]);
 
   return (
-    <div style={styles.page}>
-      <div style={{ ...styles.card, opacity: done ? 0 : 1, transition: "opacity 0.6s ease" }}>
-        <p style={styles.subtitle}>페르소나 분석 중</p>
-        <div style={styles.iconArea}>
-          <BookSpinner step={stepIndex} />
-        </div>
-        <p style={styles.stepText}>
-          {LOADING_STEPS[stepIndex]}
-          <span style={styles.dots}>{".".repeat(dotCount)}</span>
-        </p>
-        <div style={styles.divider} />
-        <div style={styles.progressWrapper}>
-          <div style={styles.progressTrack}>
-            <div style={{ ...styles.progressBar, width: `${barWidth}%`, transition: "width 0.8s ease" }} />
+      <div style={styles.page}>
+        <div style={{ ...styles.card, opacity: done ? 0 : 1, transition: "opacity 0.6s ease" }}>
+          <p style={styles.subtitle}>페르소나 분석 중</p>
+          <div style={styles.iconArea}>
+            <BookSpinner step={stepIndex} />
           </div>
-          <div style={styles.progressFooter}>
-            <span style={styles.progressLabel}>분석 진행률</span>
-            <span style={styles.progressPct}>{Math.round(barWidth)}%</span>
+          <p style={styles.stepText}>
+            {LOADING_STEPS[stepIndex]}
+            <span style={styles.dots}>{".".repeat(dotCount)}</span>
+          </p>
+          <div style={styles.divider} />
+          <div style={styles.progressWrapper}>
+            <div style={styles.progressTrack}>
+              <div style={{ ...styles.progressBar, width: `${barWidth}%`, transition: "width 0.8s ease" }} />
+            </div>
+            <div style={styles.progressFooter}>
+              <span style={styles.progressLabel}>분석 진행률</span>
+              <span style={styles.progressPct}>{Math.round(barWidth)}%</span>
+            </div>
           </div>
-        </div>
-        <div style={styles.stepIndicator}>
-          {LOADING_STEPS.map((_, i) => (
-            <div key={i} style={{ ...styles.stepDot, background: i <= stepIndex ? "#000" : "#ddd", transition: "background 0.4s ease" }} />
-          ))}
+          <div style={styles.stepIndicator}>
+            {LOADING_STEPS.map((_, i) => (
+                <div key={i} style={{ ...styles.stepDot, background: i <= stepIndex ? "#000" : "#ddd", transition: "background 0.4s ease" }} />
+            ))}
+          </div>
         </div>
       </div>
-    </div>
   );
 }
 
 function BookSpinner({ step }) {
   const lines = [[56, 34, 88, 34], [56, 44, 88, 44], [56, 54, 88, 54], [56, 64, 78, 64]];
   return (
-    <div style={styles.svgWrapper}>
-      <svg width="90" height="90" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ animation: "pulse 1.6s ease-in-out infinite" }}>
-        <style>{`@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.96); } }`}</style>
-        <rect x="20" y="20" width="80" height="80" rx="4" stroke="#000" strokeWidth="2.5" fill="#fff" />
-        <line x1="44" y1="20" x2="44" y2="100" stroke="#000" strokeWidth="2.5" />
-        {lines.map(([x1, y1, x2, y2], i) => (
-          <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#000" strokeWidth="1.5" opacity={i <= step ? 1 : 0.2} style={{ transition: "opacity 0.5s ease" }} />
-        ))}
-        <circle cx="32" cy="60" r="8" stroke="#000" strokeWidth="2" fill="#fff" opacity={step >= 2 ? 1 : 0.2} style={{ transition: "opacity 0.5s ease" }} />
-        <line x1="32" y1="52" x2="32" y2="68" stroke="#000" strokeWidth="1.5" opacity={step >= 2 ? 1 : 0.2} style={{ transition: "opacity 0.5s ease" }} />
-        <line x1="24" y1="60" x2="40" y2="60" stroke="#000" strokeWidth="1.5" opacity={step >= 2 ? 1 : 0.2} style={{ transition: "opacity 0.5s ease" }} />
-      </svg>
-    </div>
+      <div style={styles.svgWrapper}>
+        <svg width="90" height="90" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ animation: "pulse 1.6s ease-in-out infinite" }}>
+          <style>{`@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.96); } }`}</style>
+          <rect x="20" y="20" width="80" height="80" rx="4" stroke="#000" strokeWidth="2.5" fill="#fff" />
+          <line x1="44" y1="20" x2="44" y2="100" stroke="#000" strokeWidth="2.5" />
+          {lines.map(([x1, y1, x2, y2], i) => (
+              <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#000" strokeWidth="1.5" opacity={i <= step ? 1 : 0.2} style={{ transition: "opacity 0.5s ease" }} />
+          ))}
+          <circle cx="32" cy="60" r="8" stroke="#000" strokeWidth="2" fill="#fff" opacity={step >= 2 ? 1 : 0.2} style={{ transition: "opacity 0.5s ease" }} />
+          <line x1="32" y1="52" x2="32" y2="68" stroke="#000" strokeWidth="1.5" opacity={step >= 2 ? 1 : 0.2} style={{ transition: "opacity 0.5s ease" }} />
+          <line x1="24" y1="60" x2="40" y2="60" stroke="#000" strokeWidth="1.5" opacity={step >= 2 ? 1 : 0.2} style={{ transition: "opacity 0.5s ease" }} />
+        </svg>
+      </div>
   );
 }
 

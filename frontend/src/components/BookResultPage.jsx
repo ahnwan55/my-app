@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 
 const sampleBooks = [
-  { id: 1, title: "어린 왕자", author: "앙투안 드 생텍쥐페리", cover: null, summary: "사막에 불시착한 조종사가 만난 어린 왕자와의 이야기. 어른들이 잃어버린 순수함과 진정한 관계의 의미를 섬세하게 담아낸 시대를 초월한 고전 소설입니다.", genre: "고전문학" },
-  { id: 2, title: "데미안", author: "헤르만 헤세", cover: null, summary: "소년 싱클레어가 데미안을 만나며 자아를 찾아가는 성장 이야기. 내면의 목소리에 귀 기울이며 진정한 자신을 발견하는 여정을 그린 헤세의 대표작입니다.", genre: "성장소설" },
-  { id: 3, title: "채식주의자", author: "한강", cover: null, summary: "어느 날 고기를 끊기로 결심한 한 여성의 이야기. 평범한 일상 속에 감추어진 폭력과 욕망, 그리고 존재에 대한 질문을 강렬하게 파고드는 한강의 부커상 수상작입니다.", genre: "현대소설" },
+  { id: 1, title: "채식주의자", author: "한강", cover: null, summary: "평범한 일상을 살아가던 한 여성이 어느 날 육식을 거부하면서 시작되는 이야기. 욕망과 폭력, 자유와 억압에 대한 날카로운 시선을 담은 한강의 대표작입니다.", genre: "소설" },
+  { id: 2, title: "82년생 김지영", author: "조남주", cover: null, summary: "1982년에 태어난 평범한 여성의 삶을 통해 한국 사회의 구조적 문제를 담담하게 그려낸 소설입니다.", genre: "소설" },
+  { id: 3, title: "불편한 편의점", author: "김호연", cover: null, summary: "서울역 노숙자 독고씨가 편의점 야간 알바를 하며 주변 사람들과 따뜻한 관계를 맺어가는 힐링 소설입니다.", genre: "소설" },
 ];
 
-export default function BookResultPage({ books = sampleBooks, personaName = "목표 달성자", onBack }) {
+export default function BookResultPage({ books = sampleBooks, personaName = "지적 탐험가" }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -15,53 +15,51 @@ export default function BookResultPage({ books = sampleBooks, personaName = "목
   }, []);
 
   return (
-    <div style={styles.page}>
-      <div style={styles.header}>
-        <button style={styles.backBtn} onClick={onBack}>← 돌아가기</button>
-        <div style={styles.headerCenter}>
-          <span style={styles.headerSub}>{personaName}을 위한</span>
-          <span style={styles.headerTitle}>추천 도서</span>
+      <div style={styles.page}>
+        <div style={styles.header}>
+          <div style={styles.headerCenter}>
+            <span style={styles.headerSub}>{personaName}을 위한</span>
+            <span style={styles.headerTitle}>추천 도서</span>
+          </div>
         </div>
-        <div style={{ width: "64px" }} />
+        <div style={styles.listArea}>
+          {books.map((book, idx) => (
+              <BookCard key={book.id} book={book} index={idx + 1} delay={idx * 120} visible={visible} />
+          ))}
+        </div>
       </div>
-      <div style={styles.listArea}>
-        {books.map((book, idx) => (
-          <BookCard key={book.id} book={book} index={idx + 1} delay={idx * 120} visible={visible} />
-        ))}
-      </div>
-    </div>
   );
 }
 
 function BookCard({ book, index, delay, visible }) {
   return (
-    <div style={{ ...styles.card, opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(20px)", transition: `opacity 0.6s ease ${delay}ms, transform 0.6s ease ${delay}ms` }}>
-      <div style={styles.indexBadge}>{index}</div>
-      <div style={styles.cardInner}>
-        <div style={styles.coverWrapper}>
-          {book.cover ? (
-            <img src={book.cover} alt={book.title} style={styles.coverImg} />
-          ) : (
-            <div style={styles.coverPlaceholder}>
-              <svg width="32" height="44" viewBox="0 0 36 48" fill="none">
-                <rect x="1" y="1" width="34" height="46" rx="2" stroke="#000" strokeWidth="1.5" fill="#fff" />
-                <line x1="6" y1="1" x2="6" y2="47" stroke="#000" strokeWidth="1.5" />
-                <line x1="12" y1="12" x2="28" y2="12" stroke="#000" strokeWidth="1" />
-                <line x1="12" y1="18" x2="28" y2="18" stroke="#000" strokeWidth="1" />
-                <line x1="12" y1="24" x2="22" y2="24" stroke="#000" strokeWidth="1" />
-              </svg>
-            </div>
-          )}
-        </div>
-        <div style={styles.bookInfo}>
-          <span style={styles.genreTag}>{book.genre}</span>
-          <h2 style={styles.bookTitle}>{book.title}</h2>
-          <p style={styles.bookAuthor}>{book.author}</p>
-          <div style={styles.divider} />
-          <p style={styles.bookSummary}>{book.summary}</p>
+      <div style={{ ...styles.card, opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(20px)", transition: `opacity 0.6s ease ${delay}ms, transform 0.6s ease ${delay}ms` }}>
+        <div style={styles.indexBadge}>{index}</div>
+        <div style={styles.cardInner}>
+          <div style={styles.coverWrapper}>
+            {book.cover ? (
+                <img src={book.cover} alt={book.title} style={styles.coverImg} />
+            ) : (
+                <div style={styles.coverPlaceholder}>
+                  <svg width="32" height="44" viewBox="0 0 36 48" fill="none">
+                    <rect x="1" y="1" width="34" height="46" rx="2" stroke="#000" strokeWidth="1.5" fill="#fff" />
+                    <line x1="6" y1="1" x2="6" y2="47" stroke="#000" strokeWidth="1.5" />
+                    <line x1="12" y1="12" x2="28" y2="12" stroke="#000" strokeWidth="1" />
+                    <line x1="12" y1="18" x2="28" y2="18" stroke="#000" strokeWidth="1" />
+                    <line x1="12" y1="24" x2="22" y2="24" stroke="#000" strokeWidth="1" />
+                  </svg>
+                </div>
+            )}
+          </div>
+          <div style={styles.bookInfo}>
+            <span style={styles.genreTag}>{book.genre}</span>
+            <h2 style={styles.bookTitle}>{book.title}</h2>
+            <p style={styles.bookAuthor}>{book.author}</p>
+            <div style={styles.divider} />
+            <p style={styles.bookSummary}>{book.summary}</p>
+          </div>
         </div>
       </div>
-    </div>
   );
 }
 
@@ -79,21 +77,8 @@ const styles = {
     padding: "clamp(12px, 3.5vw, 16px) clamp(16px, 4vw, 24px)",
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     zIndex: 10,
-  },
-  backBtn: {
-    background: "none",
-    border: "none",
-    fontSize: "clamp(11px, 3vw, 13px)",
-    cursor: "pointer",
-    color: "#000",
-    fontFamily: "inherit",
-    letterSpacing: "0.04em",
-    padding: "0",
-    width: "64px",
-    textAlign: "left",
-    touchAction: "manipulation",
   },
   headerCenter: {
     display: "flex",
@@ -173,7 +158,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: "5px",
-    minWidth: 0, // 텍스트 오버플로우 방지
+    minWidth: 0,
   },
   genreTag: {
     fontSize: "clamp(9px, 2.3vw, 10px)",

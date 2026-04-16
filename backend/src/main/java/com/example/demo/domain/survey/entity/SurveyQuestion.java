@@ -3,11 +3,13 @@ package com.example.demo.domain.survey.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.List;
-
-
+/**
+ * SurveyQuestion - 설문 문항 엔티티
+ *
+ * 주관식 자유 서술형으로 변경됨에 따라
+ * 기존 선택지(options), 점수(scores) 컬럼을 제거했습니다.
+ * 문항 내용(content)과 순서(orderNum)만 관리합니다.
+ */
 @Entity
 @Table(name = "survey_question")
 @Getter
@@ -25,37 +27,11 @@ public class SurveyQuestion {
     @JoinColumn(name = "survey_id", nullable = false)
     private Survey survey;
 
-    // 문항 내용 (예: 월 소득 중 저축 비율은?)
+    // 문항 내용 (예: 평소에 책을 읽는 가장 큰 이유를 자유롭게 이야기해주세요.)
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    // 문항 순서
+    // 문항 순서 (1~10)
     @Column(nullable = false)
     private Integer orderNum;
-
-    // 선택지 JSON (예: ["10% 미만","10~30%","30% 이상"])
-    @Column(columnDefinition = "TEXT")
-    private String options;
-
-    // 각 선택지의 점수 JSON (예: [1,2,3])
-    @Column(columnDefinition = "TEXT")
-    private String scores;
-
-    // 선택지 목록 반환
-    public List<String> getOptionList() {
-        try {
-            return new ObjectMapper().readValue(options, new TypeReference<List<String>>() {});
-        } catch (Exception e) {
-            return List.of();
-        }
-    }
-
-    // 점수 목록 반환
-    public List<Integer> getScoreList() {
-        try {
-            return new ObjectMapper().readValue(scores, new TypeReference<List<Integer>>() {});
-        } catch (Exception e) {
-            return List.of();
-        }
-    }
 }

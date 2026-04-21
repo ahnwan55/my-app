@@ -1,6 +1,5 @@
 package com.example.demo.infra.ai;
 
-import com.example.demo.domain.persona.entity.PersonaCode;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,16 +13,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * AiServerClient - Spring Boot → FastAPI 내부 HTTP 통신 클라이언트
+ * AiServerClient - Spring Boot → FastAPI (sroberta) 임베딩 클라이언트
  *
- * WebClient를 사용하는 이유:
- *   - RestTemplate은 동기 블로킹 방식이라 AI 서버 응답 대기 중 스레드가 묶임
- *   - WebClient는 논블로킹 방식으로 응답 대기 중 다른 요청 처리 가능
- *   - AI 추론은 수 초 걸릴 수 있어서 WebClient가 적합
- *
- * 호출 흐름:
- *   SurveyService    → AiServerClient.classifyPersona() → FastAPI /persona  → PersonaCode 반환
- *   RecommendationService → AiServerClient.recommend()  → FastAPI /recommend → 추천 결과 반환
+ * 역할:
+ *   - 텍스트를 768차원 벡터로 변환 (jhgan/ko-sroberta-multitask)
+ *   - 도서 설명 사전 임베딩 (배치)
+ *   - 사용자 답변 실시간 임베딩 (pgvector 유사도 검색용)
  */
 @Slf4j
 @Component
@@ -35,95 +30,101 @@ public class AiServerClient {
     @Value("${ai-server.url}")
     private String aiServerUrl;
 
-    // AI 서버 응답 최대 대기 시간 (LLM 추론은 오래 걸릴 수 있음)
-    private static final Duration TIMEOUT = Duration.ofSeconds(60);
+    private static final Duration TIMEOUT = Duration.ofSeconds(30);
 
     /**
-     * FastAPI /persona 엔드포인트 호출 - 페르소나 분류
-     *
-     * 설문 10문항의 주관식 답변을 FastAPI로 전달하면
-     * LLM이 분석하여 6개 페르소나 중 하나의 코드를 반환합니다.
+     * 텍스트 임베딩 변환
      *
      * 요청 형식:
-     *   { "answers": { "문항 내용": "사용자 답변", ... } }
+     *   { "text": "책 제목 + 저자 + 책 소개" }
      *
      * 응답 형식:
-     *   { "persona_code": "EXPLORER" }
+     *   { "embedding": [0.1, 0.2, ..., 0.9] }  (768차원)
      *
-     * @param surveyAnswers 문항 내용(key) → 사용자 답변(value) Map
-     * @return PersonaCode (분류 실패 시 예외 발생 → 호출부에서 폴백 처리)
+     * @param text 임베딩할 텍스트
+     * @return 768차원 float 벡터
      */
-    public PersonaCode classifyPersona(Map<String, String> surveyAnswers) {
+    public List<Float> embed(String text) {
         WebClient client = webClientBuilder.baseUrl(aiServerUrl).build();
 
-        Map<String, Object> requestBody = Map.of("answers", surveyAnswers);
+        Map<String, Object> requestBody = Map.of("text", text);
 
         JsonNode response = client.post()
-                .uri("/persona")
+                .uri("/embed")
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .timeout(TIMEOUT)
                 .onErrorResume(e -> {
-                    log.warn("[AiServerClient] FastAPI /persona 호출 실패: {}", e.getMessage());
+                    log.warn("[AiServerClient] FastAPI /embed 호출 실패: {}", e.getMessage());
                     return Mono.empty();
                 })
                 .block();
 
         if (response == null) {
-            throw new IllegalStateException("FastAPI /persona 응답이 없습니다.");
+            throw new IllegalStateException("FastAPI /embed 응답이 없습니다.");
         }
 
-        String code = response.path("persona_code").asText(null);
-        if (code == null || code.isBlank()) {
-            throw new IllegalStateException("FastAPI /persona 응답에 persona_code가 없습니다.");
+        JsonNode embeddingNode = response.path("embedding");
+        if (embeddingNode.isMissingNode() || !embeddingNode.isArray()) {
+            throw new IllegalStateException("FastAPI /embed 응답에 embedding이 없습니다.");
         }
 
-        try {
-            return PersonaCode.valueOf(code.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalStateException("알 수 없는 페르소나 코드: " + code);
+        List<Float> embedding = new java.util.ArrayList<>();
+        for (JsonNode value : embeddingNode) {
+            embedding.add((float) value.asDouble());
         }
+
+        return embedding;
     }
 
     /**
-     * FastAPI /recommend 엔드포인트 호출 - 도서 추천 코멘트 생성
+     * 도서 배치 임베딩 (최초 1회 도서 DB 구축 시 사용)
      *
-     * @param profile  사용자 프로필 (페르소나, 독서 성향 등)
-     * @param products 추천 후보 도서 목록
-     * @return AI 추천 코멘트 문자열, 실패 시 null
+     * 요청 형식:
+     *   { "texts": ["책1 정보", "책2 정보", ...] }
+     *
+     * 응답 형식:
+     *   { "embeddings": [[0.1, ...], [0.2, ...], ...] }
+     *
+     * @param texts 임베딩할 텍스트 목록
+     * @return 768차원 벡터 목록
      */
-    public String recommend(Map<String, Object> profile, List<Map<String, Object>> products) {
-        try {
-            WebClient client = webClientBuilder.baseUrl(aiServerUrl).build();
+    public List<List<Float>> embedBatch(List<String> texts) {
+        WebClient client = webClientBuilder.baseUrl(aiServerUrl).build();
 
-            Map<String, Object> requestBody = Map.of(
-                    "profile", profile,
-                    "products", products
-            );
+        Map<String, Object> requestBody = Map.of("texts", texts);
 
-            JsonNode response = client.post()
-                    .uri("/recommend")
-                    .bodyValue(requestBody)
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .timeout(TIMEOUT)
-                    .onErrorResume(e -> {
-                        log.warn("[AiServerClient] FastAPI /recommend 호출 실패, 폴백 처리: {}",
-                                e.getMessage());
-                        return Mono.empty();
-                    })
-                    .block();
+        JsonNode response = client.post()
+                .uri("/embed/batch")
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .timeout(Duration.ofSeconds(120))  // 배치는 더 오래 걸릴 수 있음
+                .onErrorResume(e -> {
+                    log.warn("[AiServerClient] FastAPI /embed/batch 호출 실패: {}", e.getMessage());
+                    return Mono.empty();
+                })
+                .block();
 
-            if (response == null) {
-                return null;
-            }
-
-            return response.path("result").asText(null);
-
-        } catch (Exception e) {
-            log.error("[AiServerClient] FastAPI /recommend 호출 중 오류: {}", e.getMessage());
-            return null;
+        if (response == null) {
+            throw new IllegalStateException("FastAPI /embed/batch 응답이 없습니다.");
         }
+
+        JsonNode embeddingsNode = response.path("embeddings");
+        if (embeddingsNode.isMissingNode() || !embeddingsNode.isArray()) {
+            throw new IllegalStateException("FastAPI /embed/batch 응답에 embeddings가 없습니다.");
+        }
+
+        List<List<Float>> result = new java.util.ArrayList<>();
+        for (JsonNode embedding : embeddingsNode) {
+            List<Float> vector = new java.util.ArrayList<>();
+            for (JsonNode value : embedding) {
+                vector.add((float) value.asDouble());
+            }
+            result.add(vector);
+        }
+
+        return result;
     }
 }

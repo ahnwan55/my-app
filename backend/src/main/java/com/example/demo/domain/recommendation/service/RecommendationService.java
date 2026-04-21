@@ -8,7 +8,7 @@ import com.example.demo.domain.persona.entity.PersonaCode;
 import com.example.demo.domain.recommendation.dto.RecommendationDto;
 import com.example.demo.domain.survey.entity.SurveySession;
 import com.example.demo.domain.survey.repository.SurveySessionRepository;
-import com.example.demo.infra.ai.AiServerClient;
+import com.example.demo.infra.ai.BedrockClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,7 +40,7 @@ public class RecommendationService {
 
     private final SurveySessionRepository surveySessionRepository;
     private final BookRepository bookRepository;
-    private final AiServerClient aiServerClient;
+    private final BedrockClient bedrockClient;
 
     private static final int MAX_RECOMMENDATIONS = 5;
 
@@ -107,7 +107,7 @@ public class RecommendationService {
                     })
                     .toList();
 
-            aiComment = aiServerClient.recommend(profile, bookList);
+            aiComment = bedrockClient.recommend(profile, bookList);
         } catch (Exception e) {
             log.warn("[RecommendationService] AI 추천 코멘트 요청 실패: {}", e.getMessage());
         }

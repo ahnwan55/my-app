@@ -7,7 +7,7 @@ import com.example.demo.domain.survey.dto.SurveyDto;
 import com.example.demo.domain.survey.entity.*;
 import com.example.demo.domain.survey.repository.SurveyRepository;
 import com.example.demo.domain.survey.repository.SurveySessionRepository;
-import com.example.demo.infra.ai.AiServerClient;
+import com.example.demo.infra.ai.BedrockClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,7 +27,7 @@ public class SurveyService {
     private final SurveyRepository surveyRepository;
     private final SurveySessionRepository surveySessionRepository;
     private final PersonaTypeRepository personaTypeRepository;
-    private final AiServerClient aiServerClient;
+    private final BedrockClient bedrockClient;
 
     /**
      * 현재 활성화된 설문지를 조회합니다.
@@ -134,9 +134,9 @@ public class SurveyService {
      */
     private PersonaCode resolvePersonaCode(Map<String, String> surveyAnswers) {
         try {
-            return aiServerClient.classifyPersona(surveyAnswers);
+            return bedrockClient.classifyPersona(surveyAnswers);
         } catch (Exception e) {
-            log.warn("[SurveyService] AI 페르소나 분류 실패, 기본값 사용: {}", e.getMessage());
+            log.warn("[SurveyService] Bedrock 페르소나 분류 실패, 기본값 사용: {}", e.getMessage());
             return PersonaCode.EXPLORER;
         }
     }

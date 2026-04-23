@@ -10,12 +10,6 @@ import lombok.Setter;
 
 import java.util.List;
 
-/**
- * LibraryApiResponse - 정보나루 API XML 응답 파싱 DTO
- *
- * 정보나루 API는 XML로 응답하므로 XmlMapper로 파싱한다.
- * @JsonIgnoreProperties(ignoreUnknown = true): 알 수 없는 필드는 무시한다.
- */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,7 +19,7 @@ public class LibraryApiResponse {
 
     /**
      * 도서 목록 (loanItemSrch API 응답)
-     * <docs><doc>...</doc></docs> 구조를 List<BookItem>으로 파싱
+     * <docs><doc>...</doc></docs>
      */
     @JacksonXmlElementWrapper(localName = "docs")
     @JacksonXmlProperty(localName = "doc")
@@ -33,28 +27,52 @@ public class LibraryApiResponse {
 
     /**
      * 도서 상세 목록 (srchDtlList API 응답)
+     * <detail><book>...</book></detail>
      */
     @JacksonXmlElementWrapper(localName = "detail")
     @JacksonXmlProperty(localName = "book")
     private List<BookDetail> detail;
+
+    /**
+     * 도서관 목록 (libSrch API 응답)
+     * <libs><lib>...</lib></libs>
+     */
+    @JacksonXmlElementWrapper(localName = "libs")
+    @JacksonXmlProperty(localName = "lib")
+    private List<LibItem> libs;
+
+    /**
+     * 전체 결과 수 (페이징 처리용)
+     */
+    @JacksonXmlProperty(localName = "numFound")
+    private Integer numFound;
+
+    /**
+     * 페이지당 결과 수
+     */
+    @JacksonXmlProperty(localName = "resultNum")
+    private Integer resultNum;
+
+    // ── 도서 기본 정보 ──────────────────────────────────────────────────
 
     @Getter
     @Setter
     @NoArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class BookItem {
-        // 정보나루 API 응답 필드명과 일치해야 함
-        private String bookname;           // 도서명
-        private String authors;            // 저자
-        private String publisher;          // 출판사
-        private String publicationYear;    // 출판년도
-        private String isbn13;             // ISBN-13
-        private String bookImageURL;       // 표지 이미지 URL
-        private String classNo;            // KDC 분류번호
-        private String classNm;            // KDC 분류명
-        private String loanCount;          // 대출 횟수 (문자열로 수신)
-        private String ranking;            // 순위
+        private String bookname;
+        private String authors;
+        private String publisher;
+        private String publicationYear;
+        private String isbn13;
+        private String bookImageURL;
+        private String classNo;
+        private String classNm;
+        private String loanCount;
+        private String ranking;
     }
+
+    // ── 도서 상세 정보 ──────────────────────────────────────────────────
 
     @Getter
     @Setter
@@ -68,6 +86,37 @@ public class LibraryApiResponse {
         private String isbn13;
         private String bookImageURL;
         private String classNo;
-        private String description;        // 도서 소개 (SRoBERTa 임베딩 입력값)
+        private String description;
+    }
+
+    // ── 도서관 정보 ─────────────────────────────────────────────────────
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class LibItem {
+        private String libCode;       // 도서관 코드
+        private String libName;       // 도서관명
+        private String address;       // 주소
+        private String tel;           // 전화번호
+        private String latitude;      // 위도
+        private String longitude;     // 경도
+        private String homepage;      // 홈페이지
+        private String closed;        // 휴관일
+        private String operatingTime; // 운영시간
+    }
+
+    // ── 장서/대출 정보 ──────────────────────────────────────────────────
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class HoldingItem {
+        private String isbn13;        // ISBN-13
+        private String bookname;      // 도서명
+        private String loanAvailable; // 대출 가능 여부 (Y/N)
+        private String libCode;       // 도서관 코드
     }
 }

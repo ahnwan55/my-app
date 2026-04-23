@@ -59,4 +59,16 @@ public class Book {
         this.description = description;
         this.cachedAt = LocalDateTime.now();
     }
+    public void update(String title, String author, String publisher,
+                       String pubYear, String kdc, String coverUrl,
+                       String description) {
+        this.title = title;
+        this.author = author;
+        this.publisher = publisher;
+        this.pubYear = pubYear;
+        this.kdc = kdc;
+        this.coverUrl = coverUrl;
+        this.description = description;
+        this.cachedAt = java.time.LocalDateTime.now();
+    }
 }

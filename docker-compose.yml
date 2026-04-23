@@ -46,6 +46,8 @@ services:
     build: ./frontend
     ports:
       - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # ← 추가
     depends_on:
       - backend
 

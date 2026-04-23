@@ -1,19 +1,23 @@
 package com.example.demo.domain.book.dto;
 
 import com.example.demo.domain.book.entity.Book;
-import com.example.demo.domain.book.entity.BookGenre;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.util.List;
 
 /**
  * BookDto - 도서 API 요청/응답 DTO 모음
  *
+ * 변경 사항:
+ *   - BookGenre 제거 → kdc(String) 필드로 교체
+ *   - Book 엔티티 필드명과 일치하도록 전면 수정
+ *     (isbn13 → bookId, authors → author, publicationYear → pubYear,
+ *      bookImageUrl → coverUrl, genre → kdc, classNo 제거)
+ *   - BookListRequest 제거 (컨트롤러에서 @RequestParam String kdc로 직접 처리)
+ *
  * Entity를 직접 반환하지 않고 DTO로 변환하는 이유:
  *   - DB 구조가 외부에 노출되지 않도록 보호
  *   - API 스펙을 자유롭게 설계 가능
- *   - fetchedAt 등 내부 관리 필드를 응답에서 제외
+ *   - cachedAt 등 내부 관리 필드를 응답에서 제외
  */
 public class BookDto {
 
@@ -24,16 +28,14 @@ public class BookDto {
     @Getter
     @Builder
     public static class BookResponse {
-        private Long id;
-        private String isbn13;
+        private String bookId;        // ISBN-13 (PK)
         private String title;
-        private String authors;
+        private String author;
         private String publisher;
-        private String publicationYear;
-        private String bookImageUrl;
+        private String pubYear;
+        private String coverUrl;
         private String description;
-        private BookGenre genre;
-        private String classNo;
+        private String kdc;           // 한국십진분류법 코드 (장르 식별용)
 
         /**
          * Book Entity → BookResponse DTO 변환
@@ -41,26 +43,15 @@ public class BookDto {
          */
         public static BookResponse of(Book book) {
             return BookResponse.builder()
-                    .id(book.getId())
-                    .isbn13(book.getIsbn13())
+                    .bookId(book.getBookId())
                     .title(book.getTitle())
-                    .authors(book.getAuthors())
+                    .author(book.getAuthor())
                     .publisher(book.getPublisher())
-                    .publicationYear(book.getPublicationYear())
-                    .bookImageUrl(book.getBookImageUrl())
+                    .pubYear(book.getPubYear())
+                    .coverUrl(book.getCoverUrl())
                     .description(book.getDescription())
-                    .genre(book.getGenre())
-                    .classNo(book.getClassNo())
+                    .kdc(book.getKdc())
                     .build();
         }
-    }
-
-    /**
-     * 도서 목록 조회 필터 요청 DTO
-     * GET /api/books?genre=NOVEL 형태로 사용
-     */
-    @Getter
-    public static class BookListRequest {
-        private BookGenre genre;  // null이면 전체 조회
     }
 }

@@ -1,89 +1,82 @@
 package com.example.demo.auth.entity;
 
+import com.example.demo.domain.persona.entity.PersonaType;
 import jakarta.persistence.*;
-import lombok.*;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
 
 @Entity
 @Table(name = "users")
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class User implements UserDetails {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "user_id")
+    private Long userId;
 
-    // 카카오 고유 ID (OAuth 로그인 시 사용)
-    @Column(name = "kakao_id", unique = true)
+    // 카카오가 부여하는 고유 식별자. Long 타입 유지 (UserRepository와 통일)
+    @Column(name = "kakao_id", nullable = false, unique = true)
     private Long kakaoId;
 
-    // 이메일은 카카오에서 못 받아올 수 있으므로 nullable
-    @Column(unique = true)
-    private String email;
-
-    // 카카오 로그인 시 패스워드 불필요 → nullable
-    @Column
-    private String password;
-
-    // 카카오 닉네임
-    @Column(nullable = false)
+    // 카카오 선택 동의 or 서비스 내 직접 설정. nullable 허용
+    @Column(name = "nickname", length = 30)
     private String nickname;
 
-    // 프로필 사진 URL (선택 동의)
-    @Column(name = "profile_image")
+    // 현재 페르소나 (최신 분석 결과). LAZY: 필요할 때만 조회
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "persona_id")
+    private PersonaType personaType;
+
+    @Column(name = "profile_image", length = 500)
     private String profileImage;
 
-    // FCM 푸시 알림 토큰
-    @Column(name = "fcm_token")
-    private String fcmToken;
+    // JWT 리프레시 토큰. 재발급 검증 시 DB값과 비교
+    @Column(name = "refresh_token", length = 500)
+    private String refreshToken;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @PrePersist
-    public void prePersist() {
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Builder
+    public User(Long kakaoId, String nickname, String profileImage) {
+        this.kakaoId = kakaoId;
+        this.nickname = nickname;
+        this.profileImage = profileImage;
         this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
-    // FCM 토큰 업데이트
-    public void updateFcmToken(String fcmToken) {
-        this.fcmToken = fcmToken;
-    }
-
-    // 프로필 업데이트
+    // 카카오 재로그인 시 닉네임·프로필 최신화
     public void updateProfile(String nickname, String profileImage) {
         this.nickname = nickname;
         this.profileImage = profileImage;
+        this.updatedAt = LocalDateTime.now();
     }
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+    // 서비스 내 닉네임 직접 설정
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+        this.updatedAt = LocalDateTime.now();
     }
 
-    @Override
-    public String getUsername() {
-        // 카카오 로그인은 kakaoId, 일반 로그인은 email 사용
-        return email != null ? email : String.valueOf(kakaoId);
+    // 분석 완료 후 현재 페르소나 갱신
+    public void updatePersona(PersonaType personaType) {
+        this.personaType = personaType;
+        this.updatedAt = LocalDateTime.now();
     }
 
-    @Override
-    public boolean isAccountNonExpired() { return true; }
-
-    @Override
-    public boolean isAccountNonLocked() { return true; }
-
-    @Override
-    public boolean isCredentialsNonExpired() { return true; }
-
-    @Override
-    public boolean isEnabled() { return true; }
+    // 로그인/재발급 시 리프레시 토큰 갱신. 로그아웃 시 null 전달
+    public void updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

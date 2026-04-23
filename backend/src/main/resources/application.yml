@@ -48,6 +48,10 @@ aws:
   access-key: ${AWS_ACCESS_KEY}
   secret-key: ${AWS_SECRET_KEY}
   region: ${AWS_REGION}
+  bedrock:
+    model-id: ${BEDROCK_MODEL_ID}
 
+data-library:
+  api-key: ${LIBRARY_API_KEY}
 ai-server:
   url: ${AI_SERVER_URL}

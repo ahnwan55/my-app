@@ -10,14 +10,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 
-/**
- * LibraryApiClient - 정보나루 API 호출 클라이언트
- *
- * 변경 사항:
- *   - @Value 키를 ${data-library.api-key}로 통일 (application.yml과 일치)
- *   - getMonthlyPopular() 추가 → 이달의 인기대출도서 Top10 조회
- *   - 기존 getLoanItems, getRisingBooks 등 유지
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -25,14 +17,12 @@ public class LibraryApiClient {
 
     private final WebClient.Builder webClientBuilder;
 
-    // application.yml: data-library.api-key → .env: LIBRARY_API_KEY
-    @Value("${data-library.api-key:NOT_SET}")
+    @Value("${library.api-key:NOT_SET}")
     private String apiKey;
 
     private static final String BASE_URL = "https://data4library.kr";
     private static final int DEFAULT_PAGE_SIZE = 10;
 
-    // XmlMapper는 스레드 안전하므로 필드로 공유
     private final XmlMapper xmlMapper = new XmlMapper();
 
     // ── 공통 유틸 ──────────────────────────────────────────────────────────
@@ -66,12 +56,8 @@ public class LibraryApiClient {
     // ── API 호출 메서드 ────────────────────────────────────────────────────
 
     /**
-     * 이달의 인기대출도서 Top N 조회 (monthly_popular_book 적재 전용)
+     * 이달의 인기대출도서 Top N 조회
      * GET /api/loanItemSrch
-     *
-     * @param startDt  조회 시작일 (yyyy-MM-dd)
-     * @param endDt    조회 종료일 (yyyy-MM-dd)
-     * @param pageSize 조회 건수 (기본 10)
      */
     public List<LibraryApiResponse.BookItem> getMonthlyPopular(
             String startDt, String endDt, int pageSize) {
@@ -87,57 +73,6 @@ public class LibraryApiClient {
                         .queryParam("startDt", startDt)
                         .queryParam("endDt", endDt)
                         .queryParam("pageSize", pageSize)
-                        .build())
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
-
-        return extractBooks(parseXml(xml));
-    }
-
-    /**
-     * 인기 대출 도서 조회
-     * GET /api/loanItemSrch
-     */
-    public List<LibraryApiResponse.BookItem> getLoanItems(String startDt, String endDt) {
-        if (isApiKeyNotSet()) return List.of();
-
-        log.info("[LibraryApiClient] 인기대출도서 조회 {} ~ {}", startDt, endDt);
-
-        String xml = webClientBuilder.baseUrl(BASE_URL).build()
-                .get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/api/loanItemSrch")
-                        .queryParam("authKey", apiKey)
-                        .queryParam("startDt", startDt)
-                        .queryParam("endDt", endDt)
-                        .queryParam("pageSize", DEFAULT_PAGE_SIZE)
-                        .build())
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
-
-        return extractBooks(parseXml(xml));
-    }
-
-    /**
-     * 대출 급상승 도서 조회
-     * GET /api/loanItemSrch?ascending=true
-     */
-    public List<LibraryApiResponse.BookItem> getRisingBooks(String startDt, String endDt) {
-        if (isApiKeyNotSet()) return List.of();
-
-        log.info("[LibraryApiClient] 대출 급상승 도서 조회 {} ~ {}", startDt, endDt);
-
-        String xml = webClientBuilder.baseUrl(BASE_URL).build()
-                .get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/api/loanItemSrch")
-                        .queryParam("authKey", apiKey)
-                        .queryParam("startDt", startDt)
-                        .queryParam("endDt", endDt)
-                        .queryParam("ascending", "true")
-                        .queryParam("pageSize", DEFAULT_PAGE_SIZE)
                         .build())
                 .retrieve()
                 .bodyToMono(String.class)
@@ -177,33 +112,55 @@ public class LibraryApiClient {
     }
 
     /**
-     * 연령대/성별 조건 기반 인기 대출 도서 조회
-     * GET /api/loanItemSrch
+     * 정보공개 도서관 목록 조회 (서울 전체)
+     * GET /api/libSrch
      */
-    public List<LibraryApiResponse.BookItem> getLoanItemsByCondition(
-            String startDt, String endDt, Integer ageGroup, Integer gender) {
-        if (isApiKeyNotSet()) return List.of();
+    public LibraryApiResponse getLibraries(int pageNo, int pageSize) {
+        if (isApiKeyNotSet()) return null;
 
-        log.info("[LibraryApiClient] 조건부 랭킹 조회 {} ~ {} 연령:{} 성별:{}",
-                startDt, endDt, ageGroup, gender);
+        log.info("[LibraryApiClient] 도서관 목록 조회 pageNo={}", pageNo);
 
         String xml = webClientBuilder.baseUrl(BASE_URL).build()
                 .get()
-                .uri(uriBuilder -> {
-                    uriBuilder
-                            .path("/api/loanItemSrch")
-                            .queryParam("authKey", apiKey)
-                            .queryParam("startDt", startDt)
-                            .queryParam("endDt", endDt)
-                            .queryParam("pageSize", 20);
-                    if (ageGroup != null) uriBuilder.queryParam("age", ageGroup);
-                    if (gender != null)   uriBuilder.queryParam("gender", gender);
-                    return uriBuilder.build();
-                })
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/libSrch")
+                        .queryParam("authKey", apiKey)
+                        .queryParam("region", "11")
+                        .queryParam("pageNo", pageNo)
+                        .queryParam("pageSize", pageSize)
+                        .build())
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
 
-        return extractBooks(parseXml(xml));
+        return parseXml(xml);
+    }
+
+    /**
+     * 도서관별 장서/대출 데이터 조회
+     * GET /api/itemSrch
+     */
+    public LibraryApiResponse getBookHoldings(
+            String libraryCode, int pageNo, int pageSize) {
+        if (isApiKeyNotSet()) return null;
+
+        log.info("[LibraryApiClient] 장서/대출 조회 libraryCode={} pageNo={}",
+                libraryCode, pageNo);
+
+        String xml = webClientBuilder.baseUrl(BASE_URL).build()
+                .get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/itemSrch")
+                        .queryParam("authKey", apiKey)
+                        .queryParam("libCode", libraryCode)
+                        .queryParam("pageNo", pageNo)
+                        .queryParam("pageSize", pageSize)
+                        .queryParam("type", "ALL")
+                        .build())
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        return parseXml(xml);
     }
 }

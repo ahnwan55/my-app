@@ -72,6 +72,9 @@ dependencies {
 
 	// .env 파일 로드
 	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
+	// XML 파싱 (정보나루 API XML 응답 처리)
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
 }
 
 tasks.named('test') {

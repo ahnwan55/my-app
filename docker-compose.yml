@@ -1,4 +1,23 @@
 services:
+
+  # ── PostgreSQL ────────────────────────────────────────────────
+  postgres:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: library_db
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d library_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Spring Boot 백엔드 ────────────────────────────────────────
   backend:
     build: ./backend
     ports:
@@ -6,7 +25,29 @@ services:
     env_file:
       - docker-compose.env
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/findb
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/library_db
       - AI_SERVER_URL=http://ai-server:8000
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+
+  # ── FastAPI AI 서버 (SRoBERTa 임베딩) ────────────────────────
+  ai-server:
+    build: ./ai-server
+    ports:
+      - "8000:8000"
+    env_file:
+      - docker-compose.env
+    volumes:
+      - ./ai-server/models:/app/models
+
+  # ── React 프론트엔드 + Nginx ──────────────────────────────────
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

@@ -1,10 +1,24 @@
 package com.example.demo.domain.persona.entity;
 
+/**
+ * PersonaCode - 도서 취향 기반 페르소나 분류 코드
+ *
+ * LLM이 설문 10문항(자유 서술형) 답변을 분석하여
+ * 아래 6개 페르소나 중 하나로 분류합니다.
+ *
+ * 분류 기준:
+ *   - 독서 목적 (지식 / 감성 / 실용 / 휴식 / 분석 / 사유)
+ *   - 독서 후 반응 (탐구 / 여운 / 실천 / 만족 / 분석 / 성찰)
+ *   - 책 선택 방식 (논리적 탐색 / 감각적 끌림 / 목표 지향 등)
+ *   - 몰입 방식 (깊이 / 감정 / 빠르게 / 편안하게 등)
+ *   - 독서 빈도·태도 (탐독 / 선택적 / 가벼운 등)
+ */
 public enum PersonaCode {
-    SAFETY_GUARD,       // 철벽 수비대
-    GOAL_ACHIEVER,      // 목표 달성러
-    RATE_OPTIMIZER,     // 알뜰 최적화러
-    STEADY_WORKER,      // 안정 추구 직장인
-    BALANCED_SPENDER,   // 감성 소비 저축러
-    FUTURE_PLANNER      // 미래 설계자
+
+    EXPLORER,   // 지적 탐험가 - 지식 확장, 논리적 탐색, 깊이 읽음
+    CURATOR,    // 감성 수집가 - 감정 몰입, 감각적 선택, 여운 중시
+    NAVIGATOR,  // 현실 항해사 - 실용/목표, 핵심 위주, 바로 실천
+    DWELLER,    // 안식처 거주자 - 휴식/위로, 가볍게, 편안함 우선
+    ANALYST,    // 비판적 관찰자 - 구조 분석, 논리 검증, 비판적 시각
+    DIVER       // 사색 잠수형 - 사유/성찰, 천천히 곱씹음, 혼자 생각
 }

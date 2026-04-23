@@ -1,55 +1,43 @@
--- 페르소나 타입
+-- ================================================================
+-- 페르소나 타입 (도서 취향 기반 6개)
+-- ================================================================
 INSERT INTO persona_type (code, name)
 SELECT code, name FROM (VALUES
-  ('SAFETY_GUARD',     '철벽 수비대'),
-  ('GOAL_ACHIEVER',    '목표 달성러'),
-  ('RATE_OPTIMIZER',   '알뜰 최적화러'),
-  ('STEADY_WORKER',    '안정 추구 직장인'),
-  ('BALANCED_SPENDER', '감성 소비 저축러'),
-  ('FUTURE_PLANNER',   '미래 설계자')
+    ('EXPLORER',  '지적 탐험가'),
+    ('CURATOR',   '감성 수집가'),
+    ('NAVIGATOR', '현실 항해사'),
+    ('DWELLER',   '안식처 거주자'),
+    ('ANALYST',   '비판적 관찰자'),
+    ('DIVER',     '사색 잠수형')
 ) AS v(code, name)
-WHERE NOT EXISTS (SELECT 1 FROM persona_type WHERE persona_type.code = v.code);
+WHERE NOT EXISTS (
+    SELECT 1 FROM persona_type WHERE persona_type.code = v.code
+);
 
+-- ================================================================
 -- 설문지
+-- ================================================================
 INSERT INTO survey (title, is_active)
-SELECT '나의 재무 성향 파악하기', true
-WHERE NOT EXISTS (SELECT 1 FROM survey WHERE title = '나의 재무 성향 파악하기');
+SELECT '나의 독서 취향 파악하기', true
+WHERE NOT EXISTS (
+    SELECT 1 FROM survey WHERE title = '나의 독서 취향 파악하기'
+);
 
--- 설문 문항
+-- ================================================================
+-- 설문 문항 (주관식 자유 서술형 10문항)
+-- options, scores 컬럼 제거됨
+-- ================================================================
 DELETE FROM survey_question WHERE survey_id = 1;
 
-INSERT INTO survey_question (survey_id, content, order_num, options, scores)
+INSERT INTO survey_question (survey_id, content, order_num)
 VALUES
-  (1, '월 소득 중 저축하는 비율은?',          1, '["10% 미만","10~30%","30% 이상"]',          '[1,2,3]'),
-  (1, '목돈이 생기면 어떻게 하시나요?',        2, '["안전한 예금","분산 투자","고수익 투자"]', '[1,2,3]'),
-  (1, '투자 손실이 발생하면?',                 3, '["즉시 손절","추이 관망","추가 매수"]',      '[1,2,3]'),
-  (1, '한 달 생활비 중 저축 계획을 세우나요?', 4, '["전혀 안 세움","가끔 세움","항상 세움"]', '[1,2,3]'),
-  (1, '재테크 정보를 얼마나 자주 찾아보나요?', 5, '["거의 안 봄","가끔 봄","매일 확인함"]',   '[1,2,3]'),
-  (1, '저축 목표 기간은 어느 정도인가요?',     6, '["1년 이내","1~3년","3년 이상"]',           '[1,2,3]');
-
--- 추천 규칙 (페르소나별)
--- STEADY_WORKER: 장기 적금, 복리, 12개월 이상, 금리 3% 이상
-INSERT INTO recommend_rule (persona_type_id, product_type, rate_type, min_term_months, max_term_months, min_rate, priority)
-SELECT id, 'SAVING', 'M', 12, 36, 1.00, 1 FROM persona_type WHERE code = 'STEADY_WORKER';
-
--- SAFETY_GUARD: 단기 예금, 단리, 6개월 이상
-INSERT INTO recommend_rule (persona_type_id, product_type, rate_type, min_term_months, max_term_months, min_rate, priority)
-SELECT id, 'DEPOSIT', 'S', 6, 24, 1.00, 1 FROM persona_type WHERE code = 'SAFETY_GUARD';
-
--- RATE_OPTIMIZER: 예금/적금 모두, 단리, 우대금리 높은 것
-INSERT INTO recommend_rule (persona_type_id, product_type, rate_type, min_term_months, max_term_months, min_rate, priority)
-SELECT id, 'DEPOSIT', 'S', 6, 36, 1.00, 1 FROM persona_type WHERE code = 'RATE_OPTIMIZER';
-INSERT INTO recommend_rule (persona_type_id, product_type, rate_type, min_term_months, max_term_months, min_rate, priority)
-SELECT id, 'SAVING', 'S', 6, 36, 1.00, 2 FROM persona_type WHERE code = 'RATE_OPTIMIZER';
-
--- GOAL_ACHIEVER: 단기 적금, 목표 달성용
-INSERT INTO recommend_rule (persona_type_id, product_type, rate_type, min_term_months, max_term_months, min_rate, priority)
-SELECT id, 'SAVING', 'S', 6, 12, 1.00, 1 FROM persona_type WHERE code = 'GOAL_ACHIEVER';
-
--- BALANCED_SPENDER: 중기 예금
-INSERT INTO recommend_rule (persona_type_id, product_type, rate_type, min_term_months, max_term_months, min_rate, priority)
-SELECT id, 'DEPOSIT', 'S', 6, 12, 1.00, 1 FROM persona_type WHERE code = 'BALANCED_SPENDER';
-
--- FUTURE_PLANNER: 장기 복리 예금
-INSERT INTO recommend_rule (persona_type_id, product_type, rate_type, min_term_months, max_term_months, min_rate, priority)
-SELECT id, 'DEPOSIT', 'M', 24, 36, 1.00, 1 FROM persona_type WHERE code = 'FUTURE_PLANNER';
+    (1, '평소에 책을 읽는 가장 큰 이유를 자유롭게 이야기해주세요.',              1),
+    (1, '어떤 책을 읽고 났을 때 "정말 잘 읽었다"는 생각이 드나요?',             2),
+    (1, '책을 고를 때 어떤 것에 끌려서 선택하게 되나요?',                        3),
+    (1, '최근에 읽었거나 인상 깊었던 책을 소개해주세요.',                         4),
+    (1, '책을 읽을 때 본인만의 방식이 있다면 자유롭게 표현해주세요.',             5),
+    (1, '책을 읽다가 가장 몰입되는 순간을 이야기해주세요.',                       6),
+    (1, '책을 다 읽고 나면 주로 어떻게 하나요?',                                  7),
+    (1, '지금까지 읽은 책 중 가장 기억에 남는 책과 그 이유를 들려주세요.',        8),
+    (1, '주로 어떤 상황이나 기분일 때 책을 펼치게 되나요?',                       9),
+    (1, '당신에게 책이란 어떤 존재인가요?',                                       10);

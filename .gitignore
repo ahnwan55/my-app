@@ -3,6 +3,8 @@
 # ──────────────────────────────
 *.env
 .env*
+backend/.env
+backend/.env*
 docker-compose.env
 docker-compose.override.yml
 
@@ -49,6 +51,15 @@ __pycache__/
 # ──────────────────────────────
 frontend/node_modules/
 frontend/dist/
+frontend/.env
+frontend/.env.*
+frontend/.env.local
+frontend/.env.development
+frontend/.env.production
+frontend/node_modules/
+frontend/dist/
+frontend/.cache/
+frontend/*.local
 
 # ──────────────────────────────
 # AWS 자격증명

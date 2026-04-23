@@ -25,11 +25,19 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-	// WebClient (금융감독원 API 연동용)
-	// FssApiClient에서 외부 HTTP 요청을 보낼 때 사용합니다.
-	// spring-boot-starter-webflux 안에 WebClient가 포함되어 있습니다.
-	// webflux를 추가해도 기존 MVC(RestController) 방식은 그대로 유지됩니다.
+	// pgvector
+	implementation 'com.pgvector:pgvector:0.1.4'
+
+	// OAuth2 카카오 로그인 ← 여기 추가
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+	// WebClient
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	// AWS Bedrock ← 추가
+	implementation platform('software.amazon.awssdk:bom:2.25.11')
+	implementation 'software.amazon.awssdk:bedrockruntime'
+	implementation 'software.amazon.awssdk:auth'
 
 	// Swagger (Spring Boot 3.x 호환 버전)
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'

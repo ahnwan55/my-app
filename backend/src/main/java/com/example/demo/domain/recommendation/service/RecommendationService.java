@@ -60,7 +60,7 @@ public class RecommendationService {
     public RecommendationDto.RecommendResponse getRecommendations(Long userId) {
 
         // 1. 사용자 조회
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByKakaoId(userId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "사용자를 찾을 수 없습니다: " + userId));
 

@@ -23,7 +23,7 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - docker-compose.env
+      - ./backend/.env
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/library_db
       - AI_SERVER_URL=http://ai-server:8000
@@ -37,7 +37,7 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - docker-compose.env
+      - ./backend/.env
     volumes:
       - ./ai-server/models:/app/models
 

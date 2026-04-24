@@ -62,9 +62,8 @@ public class SurveyService {
     public SurveyDto.SubmitResponse submit(Long userId, SurveyDto.SubmitRequest request) {
 
         // 1. 사용자 조회
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "사용자를 찾을 수 없습니다: " + userId));
+        User user = userRepository.findByKakaoId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
 
         // 2. answers Map → JSON 문자열 직렬화
         String answersJson;

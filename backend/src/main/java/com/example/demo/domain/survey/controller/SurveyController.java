@@ -43,7 +43,7 @@ public class SurveyController {
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody SurveyDto.SubmitRequest request) {
 
-        Long userId = Long.parseLong(userDetails.getUsername());
-        return ResponseEntity.ok(surveyService.submit(userId, request));
+        Long kakaoId = Long.parseLong(userDetails.getUsername());
+        return ResponseEntity.ok(surveyService.submit(kakaoId, request));
     }
 }

@@ -1,15 +1,12 @@
 from fastapi import FastAPI
 from app.routers import router
-from app.database import seed_vector_db
 
-app = FastAPI(title="재무 상담 AI 서버")
+app = FastAPI(
+    title="도서 임베딩 AI 서버",
+    description="SRoBERTa 모델을 사용하여 도서 텍스트를 pgvector 검색용 768차원 벡터로 변환하는 서버입니다."
+)
 
 app.include_router(router)
-
-@app.on_event("startup")
-async def startup_event():
-    """앱 시작 시 벡터 DB 초기 데이터 적재"""
-    seed_vector_db()
 
 @app.get("/health")
 def health():

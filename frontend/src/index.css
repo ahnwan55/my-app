@@ -1,1 +1,221 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Sans+KR:wght@300;400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+/* ────────────────────────────────────────
+   CSS 변수 — 벚꽃 핑크 × 퍼플 컬러 시스템
+   BookExchangeFullDemo.jsx의 C 객체 기반
+   ──────────────────────────────────────── */
+:root {
+  /* 핑크 계열 */
+  --pink:          #f472b6;
+  --pink-dark:     #ec4899;
+  --pink-light:    #fce7f3;
+  --pink-bg:       #fdf2f8;
+
+  /* 퍼플 계열 */
+  --purple:        #a855f7;
+  --purple-dark:   #7c3aed;
+  --purple-light:  #ede9fe;
+
+  /* 인디고 (방 개설형 매칭 등 보조) */
+  --indigo:        #4f46e5;
+
+  /* 기본 텍스트 / 배경 */
+  --white:         #ffffff;
+  --gray-50:       #f9fafb;
+  --gray-100:      #f3f4f6;
+  --gray-200:      #e5e7eb;
+  --gray-400:      #9ca3af;
+  --gray-500:      #6b7280;
+  --gray-700:      #374151;
+  --gray-800:      #1f2937;
+
+  /* 그라디언트 단축 */
+  --grad-primary:  linear-gradient(135deg, var(--pink), var(--purple));
+  --grad-bg:       linear-gradient(135deg, var(--pink-bg), var(--white), #faf5ff);
+
+  /* 그림자 */
+  --shadow-pink-sm: 0 4px 12px rgba(244, 114, 182, 0.25);
+  --shadow-pink-md: 0 8px 24px rgba(244, 114, 182, 0.35);
+  --shadow-pink-lg: 0 12px 40px rgba(244, 114, 182, 0.4);
+
+  /* 공통 */
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+  --radius-xl:  24px;
+  --transition: 0.2s ease;
+}
+
+/* ────────────────────────────────────────
+   리셋 & 베이스
+   ──────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--grad-bg);
+  background-attachment: fixed;
+  color: var(--gray-800);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ────────────────────────────────────────
+   공통 유틸리티
+   ──────────────────────────────────────── */
+
+/* 배경 블러 오브 (BgDecor) */
+.bg-decor {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+.bg-decor::before {
+  content: "";
+  position: absolute;
+  top: -96px; right: -96px;
+  width: 384px; height: 384px;
+  background: #fbcfe8;
+  border-radius: 50%;
+  opacity: 0.2;
+  filter: blur(60px);
+}
+.bg-decor::after {
+  content: "";
+  position: absolute;
+  bottom: -96px; left: -96px;
+  width: 384px; height: 384px;
+  background: #e9d5ff;
+  border-radius: 50%;
+  opacity: 0.2;
+  filter: blur(60px);
+}
+
+/* 그라디언트 버튼 */
+.btn-grad {
+  width: 100%;
+  padding: 16px 0;
+  border-radius: 18px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--white);
+  background: var(--grad-primary);
+  box-shadow: var(--shadow-pink-md);
+  transition: var(--transition);
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.btn-grad:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-grad:disabled {
+  background: var(--gray-100);
+  color: var(--gray-400);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 아웃라인 버튼 */
+.btn-outline-pink {
+  width: 100%;
+  padding: 16px 0;
+  border-radius: 18px;
+  border: 2px solid var(--pink-light);
+  background: transparent;
+  color: var(--pink-dark);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.btn-outline-pink:hover { background: var(--pink-light); }
+
+/* 카드 */
+.card-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--pink-light);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 4px 16px rgba(244, 114, 182, 0.08);
+}
+
+/* 뱃지 */
+.badge-pink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--pink-light);
+  color: var(--pink-dark);
+  font-size: 11px;
+  font-weight: 700;
+}
+.badge-purple {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--purple-light);
+  color: var(--purple-dark);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* 페이드인 */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in      { animation: fadeInUp 0.5s ease forwards; }
+.fade-in-d1   { animation: fadeInUp 0.5s 0.1s ease both; }
+.fade-in-d2   { animation: fadeInUp 0.5s 0.2s ease both; }
+.fade-in-d3   { animation: fadeInUp 0.5s 0.3s ease both; }
+
+/* pulse (로딩 아이콘 등) */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.05); }
+}
+.pulse { animation: pulse 2s ease-in-out infinite; }
+
+/* 반응형 컨테이너 */
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* 페이지 공통 래퍼 */
+.page-wrap {
+  min-height: 100vh;
+  background: var(--grad-bg);
+  font-family: 'Noto Sans KR', sans-serif;
+  position: relative;
+}
+
+/* 섹션 레이블 */
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--pink);
+}
+
+/* 반응형 */
+@media (max-width: 480px) {
+  .container { padding: 0 16px; }
+}

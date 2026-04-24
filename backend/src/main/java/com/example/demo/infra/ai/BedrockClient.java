@@ -123,11 +123,20 @@ public class BedrockClient {
             JsonNode responseJson = objectMapper.readTree(
                     response.body().asUtf8String()
             );
-            return responseJson
+
+            String rawText = responseJson
                     .path("content")
                     .get(0)
                     .path("text")
                     .asText();
+
+            // Claude가 ```json ... ``` 형태로 감싸는 경우 제거
+            rawText = rawText.strip();
+            if (rawText.startsWith("```")) {
+                rawText = rawText.replaceAll("^```[a-zA-Z]*\\n?", "").replaceAll("```$", "").strip();
+            }
+
+            return rawText;
 
         } catch (Exception e) {
             log.error("[BedrockClient] Bedrock 호출 실패 (modelId={}): {}", modelId, e.getMessage());
@@ -144,27 +153,33 @@ public class BedrockClient {
      */
     private String buildPersonaPrompt(Map<String, String> surveyAnswers) {
         StringBuilder sb = new StringBuilder();
-        sb.append("다음 독서 성향 설문 답변을 분석하여 아래 6가지 페르소나 중 하나로 분류하고 ");
+        sb.append("다음 독서 성향 설문 답변을 분석하여 아래 12가지 서브 페르소나 중 하나로 분류하고 ");
         sb.append("6대 지표 점수를 0~10점으로 JSON 형식으로만 반환하세요.\n\n");
-        sb.append("페르소나 종류: EXPLORER, CURATOR, NAVIGATOR, DWELLER, ANALYST, DIVER\n\n");
+        sb.append("서브 페르소나 종류:\n");
+        sb.append("EXPLORER 계열: TREND_SURFER, POLYMATH_SEEKER\n");
+        sb.append("CURATOR 계열: AESTHETIC_COLLECTOR, KNOWLEDGE_EDITOR\n");
+        sb.append("NAVIGATOR 계열: FAST_SOLVER, CAREER_STRATEGIST\n");
+        sb.append("DWELLER 계열: EMOTIONAL_SYNCHRO, CASUAL_RESTER\n");
+        sb.append("ANALYST 계열: COLD_CRITIC, SILENT_RESEARCHER\n");
+        sb.append("DIVER 계열: CONTEMPLATIVE_MONK, OBSESSIVE_FANDOM\n\n");
         sb.append("설문 답변:\n");
 
         surveyAnswers.forEach((question, answer) ->
-            sb.append("Q: ").append(question).append("\n")
-              .append("A: ").append(answer).append("\n\n")
+                sb.append("Q: ").append(question).append("\n")
+                        .append("A: ").append(answer).append("\n\n")
         );
 
         sb.append("반환 형식 (JSON만 반환, 다른 텍스트 없이):\n");
         sb.append("{\n");
-        sb.append("  \"persona_code\": \"EXPLORER\",\n");
-        sb.append("  \"reason\": \"지적 호기심이 강하고 다양한 분야를 탐험하려는 성향이 두드러집니다.\",\n");
+        sb.append("  \"persona_code\": \"TREND_SURFER\",\n");
+        sb.append("  \"reason\": \"최신 트렌드에 민감하고 다양한 분야를 빠르게 탐색하는 성향이 두드러집니다.\",\n");
         sb.append("  \"scores\": {\n");
         sb.append("    \"지적_확장성\": 9.5,\n");
-        sb.append("    \"분석적_깊이\": 8.0,\n");
+        sb.append("    \"분석적_깊이\": 4.0,\n");
         sb.append("    \"실용_지향성\": 3.0,\n");
         sb.append("    \"감성_몰입도\": 2.0,\n");
         sb.append("    \"정보_체계화\": 5.5,\n");
-        sb.append("    \"사회적_영향도\": 1.5\n");
+        sb.append("    \"사회적_영향도\": 7.0\n");
         sb.append("  },\n");
         sb.append("  \"confidence\": 0.87\n");
         sb.append("}");

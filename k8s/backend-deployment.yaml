@@ -18,7 +18,7 @@ spec:
       containers:
       - name: backend
         # 이 부분이 GitHub Actions에 의해 자동으로 업데이트됩니다.
-        image: REPLACE_ME
+        image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_be:latest
         ports:
         - containerPort: 8080
         env:

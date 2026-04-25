@@ -20,8 +20,8 @@ spec:
         image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_be:latest
         ports:
         - containerPort: 8080
-        env:
-        - name: SPRING_PROFILES_ACTIVE
-          value: prod
-        - name: AI_SERVER_URL
-          value: http://ai-server
+        envFrom:
+        - configMapRef:
+            name: backend-config
+        - secretRef:
+            name: backend-secrets

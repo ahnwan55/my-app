@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,13 +29,15 @@ import java.util.Map;
  *   - BookGenre 제거 → KDC 코드 기반 장르 매핑으로 교체
  *   - PersonaCode 6종 → 12종 switch로 교체
  *   - bedrockClient.recommend() → generateRecommendComment()로 교체
+ *   - candidates.stream().limit() → Collections.shuffle() 후 limit()으로 교체
+ *     (매번 동일한 도서만 추천되던 문제 해결)
  *
  * 추천 흐름:
  *   1. userId로 사용자 조회
  *   2. 가장 최신 PersonaAnalysis 조회 → 페르소나 확인
  *   3. 페르소나에 맞는 KDC 코드 목록 결정
  *   4. 해당 KDC 도서 DB 조회
- *   5. 상위 N권 선정
+ *   5. 랜덤 셔플 후 상위 N권 선정
  *   6. Bedrock 추천 코멘트 요청 (실패 시 null로 폴백)
  *   7. 응답 DTO 구성
  */
@@ -54,7 +57,7 @@ public class RecommendationService {
     /**
      * 사용자 맞춤 도서 추천
      *
-     * @param userId 로그인한 사용자 ID
+     * @param userId 로그인한 사용자 ID (kakaoId)
      * @return 페르소나 기반 추천 도서 목록 + AI 코멘트
      */
     public RecommendationDto.RecommendResponse getRecommendations(Long userId) {
@@ -87,10 +90,12 @@ public class RecommendationService {
         // 도서가 없으면 전체 도서에서 추천
         if (candidates.isEmpty()) {
             log.warn("[RecommendationService] 페르소나 {} KDC 도서 없음, 전체 도서에서 추천", personaCode);
-            candidates = bookRepository.findAll();
+            candidates = new ArrayList<>(bookRepository.findAll());
         }
 
-        // 5. 상위 N권 선정
+        // 5. 랜덤 셔플 후 상위 N권 선정
+        // DB 저장 순서와 무관하게 매번 다른 도서를 추천하기 위해 셔플
+        Collections.shuffle(candidates);
         List<Book> topBooks = candidates.stream()
                 .limit(MAX_RECOMMENDATIONS)
                 .toList();
@@ -139,78 +144,56 @@ public class RecommendationService {
 
     // ── KDC 코드 매핑 ──────────────────────────────────────────────────────
 
-    /**
-     * 페르소나별 KDC 코드 앞자리 목록 결정.
-     * KDC 앞자리로 LIKE 검색하므로 상위 분류 코드를 사용한다.
-     * 예: "813" → 한국소설, "840" → 영미소설, "100" → 철학
-     */
     private List<String> resolveKdcPrefixes(PersonaCode personaCode) {
         return switch (personaCode) {
-            // EXPLORER 계열: 지적 탐험 → 자연과학, 인문, 역사
-            case TREND_SURFER      -> List.of("400", "300", "900");
-            case POLYMATH_SEEKER   -> List.of("100", "400", "900");
-
-            // CURATOR 계열: 심미적 수집 → 소설, 에세이, 예술
+            case TREND_SURFER        -> List.of("400", "300", "900");
+            case POLYMATH_SEEKER     -> List.of("100", "400", "900");
             case AESTHETIC_COLLECTOR -> List.of("813", "814", "600");
             case KNOWLEDGE_EDITOR    -> List.of("020", "300", "813");
-
-            // NAVIGATOR 계열: 실용 지향 → 자기계발, 경영
-            case FAST_SOLVER       -> List.of("325", "320", "190");
-            case CAREER_STRATEGIST -> List.of("325", "320", "100");
-
-            // DWELLER 계열: 감성 몰입 → 소설, 에세이, 힐링
-            case EMOTIONAL_SYNCHRO -> List.of("813", "840", "814");
-            case CASUAL_RESTER     -> List.of("814", "813", "810");
-
-            // ANALYST 계열: 분석·비평 → 사회과학, 철학, 역사
-            case COLD_CRITIC       -> List.of("300", "100", "900");
-            case SILENT_RESEARCHER -> List.of("100", "900", "400");
-
-            // DIVER 계열: 심층 탐구 → 철학, 종교, 역사
-            case CONTEMPLATIVE_MONK -> List.of("100", "200", "900");
-            case OBSESSIVE_FANDOM   -> List.of("813", "840", "808");
+            case FAST_SOLVER         -> List.of("325", "320", "190");
+            case CAREER_STRATEGIST   -> List.of("325", "320", "100");
+            case EMOTIONAL_SYNCHRO   -> List.of("813", "840", "814");
+            case CASUAL_RESTER       -> List.of("814", "813", "810");
+            case COLD_CRITIC         -> List.of("300", "100", "900");
+            case SILENT_RESEARCHER   -> List.of("100", "900", "400");
+            case CONTEMPLATIVE_MONK  -> List.of("100", "200", "900");
+            case OBSESSIVE_FANDOM    -> List.of("813", "840", "808");
         };
     }
 
     // ── 추천 이유 생성 ────────────────────────────────────────────────────
 
-    /**
-     * 개별 도서 추천 이유 (서브 페르소나 12종 기준)
-     */
     private String buildMatchReason(PersonaCode personaCode) {
         return switch (personaCode) {
-            case TREND_SURFER       -> "최신 트렌드와 새로운 분야를 빠르게 접할 수 있는 도서입니다.";
-            case POLYMATH_SEEKER    -> "여러 분야를 깊게 연결하는 지적 탐구에 적합한 도서입니다.";
+            case TREND_SURFER        -> "최신 트렌드와 새로운 분야를 빠르게 접할 수 있는 도서입니다.";
+            case POLYMATH_SEEKER     -> "여러 분야를 깊게 연결하는 지적 탐구에 적합한 도서입니다.";
             case AESTHETIC_COLLECTOR -> "심미적 감각과 다양한 장르를 즐기는 분께 어울리는 도서입니다.";
-            case KNOWLEDGE_EDITOR   -> "정보를 체계적으로 정리하고 공유하는 데 도움이 되는 도서입니다.";
-            case FAST_SOLVER        -> "핵심만 빠르게 파악하고 바로 실천할 수 있는 도서입니다.";
-            case CAREER_STRATEGIST  -> "커리어와 자기계발을 위한 깊이 있는 인사이트를 담은 도서입니다.";
-            case EMOTIONAL_SYNCHRO  -> "깊은 감정 몰입과 서사적 여운을 느낄 수 있는 도서입니다.";
-            case CASUAL_RESTER      -> "가볍게 읽으며 일상의 쉼을 찾을 수 있는 도서입니다.";
-            case COLD_CRITIC        -> "논리적 구조와 비판적 시각을 키울 수 있는 도서입니다.";
-            case SILENT_RESEARCHER  -> "혼자 조용히 텍스트의 이면을 탐구하기 좋은 도서입니다.";
-            case CONTEMPLATIVE_MONK -> "깊이 사유하고 성찰할 수 있는 도서입니다.";
-            case OBSESSIVE_FANDOM   -> "한 작가·장르를 깊이 파고드는 분께 어울리는 도서입니다.";
+            case KNOWLEDGE_EDITOR    -> "정보를 체계적으로 정리하고 공유하는 데 도움이 되는 도서입니다.";
+            case FAST_SOLVER         -> "핵심만 빠르게 파악하고 바로 실천할 수 있는 도서입니다.";
+            case CAREER_STRATEGIST   -> "커리어와 자기계발을 위한 깊이 있는 인사이트를 담은 도서입니다.";
+            case EMOTIONAL_SYNCHRO   -> "깊은 감정 몰입과 서사적 여운을 느낄 수 있는 도서입니다.";
+            case CASUAL_RESTER       -> "가볍게 읽으며 일상의 쉼을 찾을 수 있는 도서입니다.";
+            case COLD_CRITIC         -> "논리적 구조와 비판적 시각을 키울 수 있는 도서입니다.";
+            case SILENT_RESEARCHER   -> "혼자 조용히 텍스트의 이면을 탐구하기 좋은 도서입니다.";
+            case CONTEMPLATIVE_MONK  -> "깊이 사유하고 성찰할 수 있는 도서입니다.";
+            case OBSESSIVE_FANDOM    -> "한 작가·장르를 깊이 파고드는 분께 어울리는 도서입니다.";
         };
     }
 
-    /**
-     * 페르소나별 전체 추천 이유 (서브 페르소나 12종 기준)
-     */
     private String buildOverallReason(PersonaCode personaCode) {
         return switch (personaCode) {
-            case TREND_SURFER       -> "최신 트렌드에 민감하고 새로운 분야를 빠르게 탐색하는 성향으로, 최신 교양서와 트렌드 과학서를 추천드립니다.";
-            case POLYMATH_SEEKER    -> "다양한 분야를 깊게 연결하는 성향으로, 학제 간 융합서와 철학적 과학서를 추천드립니다.";
+            case TREND_SURFER        -> "최신 트렌드에 민감하고 새로운 분야를 빠르게 탐색하는 성향으로, 최신 교양서와 트렌드 과학서를 추천드립니다.";
+            case POLYMATH_SEEKER     -> "다양한 분야를 깊게 연결하는 성향으로, 학제 간 융합서와 철학적 과학서를 추천드립니다.";
             case AESTHETIC_COLLECTOR -> "심미적 관점으로 다양한 장르를 선별하는 성향으로, 에세이와 예술서를 추천드립니다.";
-            case KNOWLEDGE_EDITOR   -> "정보를 체계적으로 정리하는 성향으로, 지식 큐레이션 에세이와 인문 교양서를 추천드립니다.";
-            case FAST_SOLVER        -> "실용적이고 빠른 독서 성향으로, 비즈니스 속성 가이드와 핵심 요약서를 추천드립니다.";
-            case CAREER_STRATEGIST  -> "계획적인 자기계발 성향으로, 경영전략서와 리더십 도서를 추천드립니다.";
-            case EMOTIONAL_SYNCHRO  -> "깊은 감성 몰입 성향으로, 장편 소설과 서사 중심 논픽션을 추천드립니다.";
-            case CASUAL_RESTER      -> "가벼운 힐링 독서 성향으로, 베스트셀러 에세이와 짧은 단편 소설을 추천드립니다.";
-            case COLD_CRITIC        -> "비판적 분석 성향으로, 사회과학서와 논쟁적 인문서를 추천드립니다.";
-            case SILENT_RESEARCHER  -> "혼자 깊이 탐구하는 성향으로, 학술 교양서와 원전 번역서를 추천드립니다.";
-            case CONTEMPLATIVE_MONK -> "깊이 사유하는 성향으로, 철학 고전과 종교·사상서를 추천드립니다.";
-            case OBSESSIVE_FANDOM   -> "한 작가·시리즈에 집중하는 성향으로, 시리즈물과 작가별 전집을 추천드립니다.";
+            case KNOWLEDGE_EDITOR    -> "정보를 체계적으로 정리하는 성향으로, 지식 큐레이션 에세이와 인문 교양서를 추천드립니다.";
+            case FAST_SOLVER         -> "실용적이고 빠른 독서 성향으로, 비즈니스 속성 가이드와 핵심 요약서를 추천드립니다.";
+            case CAREER_STRATEGIST   -> "계획적인 자기계발 성향으로, 경영전략서와 리더십 도서를 추천드립니다.";
+            case EMOTIONAL_SYNCHRO   -> "깊은 감성 몰입 성향으로, 장편 소설과 서사 중심 논픽션을 추천드립니다.";
+            case CASUAL_RESTER       -> "가벼운 힐링 독서 성향으로, 베스트셀러 에세이와 짧은 단편 소설을 추천드립니다.";
+            case COLD_CRITIC         -> "비판적 분석 성향으로, 사회과학서와 논쟁적 인문서를 추천드립니다.";
+            case SILENT_RESEARCHER   -> "혼자 깊이 탐구하는 성향으로, 학술 교양서와 원전 번역서를 추천드립니다.";
+            case CONTEMPLATIVE_MONK  -> "깊이 사유하는 성향으로, 철학 고전과 종교·사상서를 추천드립니다.";
+            case OBSESSIVE_FANDOM    -> "한 작가·시리즈에 집중하는 성향으로, 시리즈물과 작가별 전집을 추천드립니다.";
         };
     }
 }

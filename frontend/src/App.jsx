@@ -38,8 +38,8 @@ import SearchPage from "./pages/SearchPage";
  */
 export default function App() {
     const [surveyAnswers, setSurveyAnswers] = useState({});
-    const [personaCode,   setPersonaCode]   = useState("EXPLORER");
-    const [personaName,   setPersonaName]   = useState("지적 탐험가");
+    const [personaCode,   setPersonaCode]   = useState("null");
+    const [personaName,   setPersonaName]   = useState("null");
     // scores는 LoadingPage → navigate("/result", { state: { scores } }) 로 전달
     // PersonaResultPage에서 useLocation().state?.scores 로 수신하므로 App state 불필요
 

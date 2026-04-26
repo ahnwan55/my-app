@@ -1,121 +1,149 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { useState } from "react";
 
-function App() {
-  const [count, setCount] = useState(0)
+import MainPage from "./pages/MainPage";
+import SurveyPage from "./pages/SurveyPage";
+import LoadingPage from "./pages/LoadingPage";
+import PersonaResultPage from "./pages/PersonaResultPage";
+import BookLoadingPage from "./pages/BookLoadingPage";
+import BookResultPage from "./pages/BookResultPage";
+import LoginPage from "./pages/LoginPage";
+import UserInfoPage from "./pages/UserInfoPage";
+import MyPage from "./pages/MyPage";
+import RankingPage from "./pages/RankingPage";
+import SearchPage from "./pages/SearchPage";
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+/**
+ * App.jsx — 라우팅 설정
+ *
+ * state 흐름:
+ *  surveyAnswers → LoadingPage → POST /api/surveys/submit
+ *  personaCode   → PersonaResultPage (서브 페르소나 코드, 예: TREND_SURFER)
+ *  personaName   → PersonaResultPage, BookLoadingPage, BookResultPage
+ *  scores        → PersonaResultPage (Radar Chart용 6대 지표 점수)
+ *                  { 지적_확장성: 8.5, 분석적_깊이: 4.0, ... }
+ *
+ * 라우트 목록:
+ *  /              → MainPage
+ *  /login         → LoginPage
+ *  /user-info     → UserInfoPage
+ *  /survey        → SurveyPage
+ *  /loading       → LoadingPage  (POST /api/surveys/submit 호출)
+ *  /result        → PersonaResultPage
+ *  /book-loading  → BookLoadingPage
+ *  /books         → BookResultPage
+ *  /ranking       → RankingPage
+ *  /search        → SearchPage
+ *  /mypage        → MyPage
+ */
+export default function App() {
+    const [surveyAnswers, setSurveyAnswers] = useState({});
+    const [personaCode,   setPersonaCode]   = useState("EXPLORER");
+    const [personaName,   setPersonaName]   = useState("지적 탐험가");
+    // scores는 LoadingPage → navigate("/result", { state: { scores } }) 로 전달
+    // PersonaResultPage에서 useLocation().state?.scores 로 수신하므로 App state 불필요
 
-      <div className="ticks"></div>
+    return (
+        <BrowserRouter>
+            <Routes>
+                {/* 인증 */}
+                <Route path="/login"     element={<LoginPage />} />
+                <Route path="/user-info" element={<UserInfoPage />} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+                {/* 메인 */}
+                <Route path="/" element={<Main />} />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+                {/* 페르소나 찾기 플로우 */}
+                <Route path="/survey"
+                    element={<Survey setSurveyAnswers={setSurveyAnswers} />}
+                />
+                <Route path="/loading"
+                    element={
+                        <Loading
+                            surveyAnswers={surveyAnswers}
+                            setPersonaCode={setPersonaCode}
+                            setPersonaName={setPersonaName}
+                        />
+                    }
+                />
+                <Route path="/result"
+                    element={<Result personaCode={personaCode} />}
+                />
+                <Route path="/book-loading" element={<BookLoading personaName={personaName} />} />
+                <Route path="/books"        element={<Books personaName={personaName} />} />
+
+                {/* 도서 서비스 */}
+                <Route path="/ranking" element={<RankingPage />} />
+                <Route path="/search"  element={<SearchPage />} />
+
+                {/* 기타 */}
+                <Route path="/mypage" element={<MyPage />} />
+            </Routes>
+        </BrowserRouter>
+    );
 }
 
-export default App
+/* ────────────────────────────────────────
+   래퍼 함수
+   ──────────────────────────────────────── */
+function Main() {
+    const navigate = useNavigate();
+    return <MainPage onStart={() => navigate("/survey")} />;
+}
+
+function Survey({ setSurveyAnswers }) {
+    const navigate = useNavigate();
+    return (
+        <SurveyPage
+            onSubmit={(answers) => {
+                setSurveyAnswers(answers);
+                navigate("/loading");
+            }}
+        />
+    );
+}
+
+/**
+ * Loading 래퍼
+ * LoadingPage에서 POST /api/surveys/submit 응답 수신 후
+ * onComplete(code, name, scores) 형태로 호출
+ * scores는 navigate state로 PersonaResultPage에 전달
+ * → PersonaResultPage에서 useLocation().state?.scores 로 수신
+ */
+function Loading({ surveyAnswers, setPersonaCode, setPersonaName }) {
+    const navigate = useNavigate();
+    return (
+        <LoadingPage
+            surveyAnswers={surveyAnswers}
+            onComplete={(code, name, scores) => {
+                setPersonaCode(code || "EXPLORER");
+                setPersonaName(name || "지적 탐험가");
+                navigate("/result", { state: { scores } });
+            }}
+        />
+    );
+}
+
+function Result({ personaCode }) {
+    const navigate = useNavigate();
+    return (
+        <PersonaResultPage
+            personaCode={personaCode}
+            onViewBooks={() => navigate("/book-loading")}
+        />
+    );
+}
+
+function BookLoading({ personaName }) {
+    const navigate = useNavigate();
+    return (
+        <BookLoadingPage
+            personaName={personaName}
+            onComplete={() => navigate("/books")}
+        />
+    );
+}
+
+function Books({ personaName }) {
+    return <BookResultPage personaName={personaName} />;
+}

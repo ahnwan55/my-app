@@ -1,22 +1,14 @@
 from pydantic import BaseModel
 from typing import List
 
-class UserProfile(BaseModel):
-    age: int
-    job: str
-    income: int
-    goal: str
-    risk_type: str  # 안정형 / 중립형 / 공격형
+class EmbedRequest(BaseModel):
+    text: str
 
-class Product(BaseModel):
-    name: str
-    bank: str
-    interest_rate: float
-    period_months: int
+class EmbedResponse(BaseModel):
+    embedding: List[float]
 
-class AnalyzeRequest(BaseModel):
-    profile: UserProfile
+class EmbedBatchRequest(BaseModel):
+    texts: List[str]
 
-class RecommendRequest(BaseModel):
-    profile: UserProfile
-    products: List[Product]
+class EmbedBatchResponse(BaseModel):
+    embeddings: List[List[float]]

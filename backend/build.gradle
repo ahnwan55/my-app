@@ -24,6 +24,22 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-batch'
+
+
+	// pgvector
+	implementation 'com.pgvector:pgvector:0.1.4'
+
+	// OAuth2 카카오 로그인 ← 여기 추가
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+	// WebClient
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	// AWS Bedrock ← 추가
+	implementation platform('software.amazon.awssdk:bom:2.25.11')
+	implementation 'software.amazon.awssdk:bedrockruntime'
+	implementation 'software.amazon.awssdk:auth'
 
 	// Swagger (Spring Boot 3.x 호환 버전)
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
@@ -55,6 +71,12 @@ dependencies {
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// .env 파일 로드
+	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
+	// XML 파싱 (정보나루 API XML 응답 처리)
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
 }
 
 tasks.named('test') {
@@ -62,6 +84,8 @@ tasks.named('test') {
 }
 
 // QueryDSL 설정
+// 컴파일 시 Q클래스(QProduct, QSurvey 등)를 자동 생성합니다.
+// 생성된 파일은 src/main/generated에 저장되며, .gitignore에 추가해야 합니다.
 def generated = 'src/main/generated'
 
 tasks.withType(JavaCompile) {

@@ -3,6 +3,8 @@
 # ──────────────────────────────
 *.env
 .env*
+backend/.env
+backend/.env*
 docker-compose.env
 docker-compose.override.yml
 
@@ -11,6 +13,7 @@ docker-compose.override.yml
 # ──────────────────────────────
 backend/src/main/resources/application.yml
 backend/src/main/resources/application-prod.yml
+backend/src/main/resources/application-local.yml
 backend/src/main/resources/application-staging.yml
 backend/src/test/resources/application-test.yml
 backend/logs/
@@ -49,6 +52,13 @@ __pycache__/
 # ──────────────────────────────
 frontend/node_modules/
 frontend/dist/
+frontend/.env
+frontend/.env.*
+frontend/.env.local
+frontend/.env.development
+frontend/.env.production
+frontend/.cache/
+frontend/*.local
 
 # ──────────────────────────────
 # AWS 자격증명
@@ -77,3 +87,9 @@ ai-server/.idea/
 # ──────────────────────────────
 .DS_Store
 Thumbs.db
+
+# ──────────────────────────────
+# 로컬 환경 설정 (민감정보 포함)
+# ──────────────────────────────
+**/application-local.yml
+**/application-local.yaml

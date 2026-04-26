@@ -1,25 +1,28 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:devdb;MODE=PostgreSQL
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-
-  sql:
-    init:
-      mode: always
+    url: jdbc:postgresql://localhost:5432/library_db
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
-    defer-datasource-initialization: true
-    open-in-view: false  # ← 경고 제거
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false
+
+  sql:
+    init:
+      mode: never
 
 ai-server:
   url: http://localhost:8000
@@ -32,3 +35,6 @@ management:
   endpoint:
     health:
       show-details: always
+
+library:
+  api-key: ${LIBRARY_API_KEY}

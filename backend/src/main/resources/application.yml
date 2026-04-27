@@ -38,6 +38,11 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
 
 jwt:
   secret: ${JWT_SECRET}

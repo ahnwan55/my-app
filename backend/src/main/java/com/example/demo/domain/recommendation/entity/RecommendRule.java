@@ -1,8 +1,6 @@
 package com.example.demo.domain.recommendation.entity;
 
 import com.example.demo.domain.persona.entity.PersonaType;
-import com.example.demo.domain.product.entity.ProductType;
-import com.example.demo.domain.product.entity.RateType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,16 +22,6 @@ public class RecommendRule {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "persona_type_id", nullable = false)
     private PersonaType personaType;
-
-    // 추천 상품 유형 (예금/적금)
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ProductType productType;
-
-    // 금리 유형 (단리/복리)
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private RateType rateType;
 
     // 추천 최소 기간 (개월)
     @Column(nullable = false)

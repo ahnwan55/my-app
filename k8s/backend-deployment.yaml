@@ -14,6 +14,8 @@ spec:
     metadata:
       labels:
         app: backend
+      annotations:
+        kubectl.kubernetes.io/restartedAt: "2026-04-27T16:23"
     spec:
       containers:
       - name: backend

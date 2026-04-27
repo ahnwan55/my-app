@@ -4,9 +4,13 @@ on:
   push:
     branches:
       - main
+      - hong
     paths:
       - 'backend/**'
 
+permissions:
+  contents: write
+  
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -57,8 +61,12 @@ jobs:
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          # Deployment 매니페스트의 이미지 태그 업데이트
-          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/backend-deployment.yaml
+          # Deployment 매니페스트의 이미지 태그 업데이트 (hong 브랜치 구조에 맞게 k8s/ 바로 아래 파일 수정)
+          if [ -f k8s/backend-deployment.yaml ]; then
+            sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/backend-deployment.yaml
+          else
+            sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/base/backend-deployment.yaml
+          fi
           
           # 변경사항 Git 푸시
           git config --global user.email "github-actions[bot]@users.noreply.github.com"

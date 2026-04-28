@@ -13,8 +13,10 @@ import org.springframework.stereotype.Component;
 /**
  * LibraryScheduler - 배치 Job 트리거 스케줄러
  *
- * 기존 @Scheduled 직접 처리 방식 → JobLauncher로 배치 Job 실행으로 교체
- * 실행 이력은 JobRepository가 RDS에 자동 저장
+ * 스케줄:
+ *   - 도서관 목록    : 매월 1일 새벽 2시 (한 달에 한 번)
+ *   - 이달의 랭킹    : 매일 새벽 3시 (하루에 한 번)
+ *   - 도서 상세정보  : 매일 새벽 4시 (하루에 한 번)
  */
 @Slf4j
 @Component
@@ -23,37 +25,56 @@ import org.springframework.stereotype.Component;
 public class LibraryScheduler {
 
     private final JobLauncher jobLauncher;
-    private final Job bookSyncJob;
+    private final Job librarySyncJob;
+    private final Job monthlyPopularSyncJob;
+    private final Job bookDetailSyncJob;
 
     /**
-     * 매월 1일 새벽 3시 실행
+     * 도서관 목록 갱신 - 매월 1일 새벽 2시
      */
-    @Scheduled(cron = "0 0 3 1 * *")
-    public void scheduledSync() {
-        runJob("scheduled");
+    @Scheduled(cron = "0 0 2 1 * *")
+    public void syncLibrary() {
+        runJob(librarySyncJob, "librarySyncJob");
     }
 
     /**
-     * 앱 시작 후 15초 뒤 최초 1회 실행
+     * 이달의 인기대출 랭킹 갱신 - 매일 새벽 3시
+     */
+    @Scheduled(cron = "0 0 3 * * *")
+    public void syncMonthlyPopular() {
+        runJob(monthlyPopularSyncJob, "monthlyPopularSyncJob");
+    }
+
+    /**
+     * 도서 상세정보(description) 갱신 - 매일 새벽 4시
+     */
+    @Scheduled(cron = "0 0 4 * * *")
+    public void syncBookDetail() {
+        runJob(bookDetailSyncJob, "bookDetailSyncJob");
+    }
+
+    /**
+     * 앱 시작 후 15초 뒤 최초 1회 전체 실행
      */
     @Scheduled(initialDelay = 15_000, fixedDelay = Long.MAX_VALUE)
     public void initialSync() {
-        runJob("initial");
+        runJob(librarySyncJob, "librarySyncJob-initial");
+        runJob(monthlyPopularSyncJob, "monthlyPopularSyncJob-initial");
+        runJob(bookDetailSyncJob, "bookDetailSyncJob-initial");
     }
 
-    private void runJob(String trigger) {
+    private void runJob(Job job, String jobName) {
         try {
             JobParameters params = new JobParametersBuilder()
-                    .addString("trigger", trigger)
                     .addLong("time", System.currentTimeMillis())
                     .toJobParameters();
 
-            log.info("[LibraryScheduler] bookSyncJob 실행 시작 - trigger: {}", trigger);
-            jobLauncher.run(bookSyncJob, params);
-            log.info("[LibraryScheduler] bookSyncJob 실행 완료");
+            log.info("[LibraryScheduler] {} 실행 시작", jobName);
+            jobLauncher.run(job, params);
+            log.info("[LibraryScheduler] {} 실행 완료", jobName);
 
         } catch (Exception e) {
-            log.error("[LibraryScheduler] bookSyncJob 실행 실패: {}", e.getMessage(), e);
+            log.error("[LibraryScheduler] {} 실행 실패: {}", jobName, e.getMessage(), e);
         }
     }
 }

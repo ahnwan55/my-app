@@ -36,12 +36,13 @@ public class SecurityConfig {
 
             // 요청별 인가 규칙
             .authorizeHttpRequests(auth -> auth
-                // 로그인, 공개 API는 인증 없이 허용
-                .requestMatchers(
-                    "/api/auth/**",
-                    "/oauth2/**",
-                    "/login/**"
-                ).permitAll()
+                    // 로그인, 공개 API는 인증 없이 허용
+                    .requestMatchers(
+                            "/actuator/**",
+                            "/api/auth/**",
+                            "/login/**",
+                            "/oauth2/**"
+                    ).permitAll()
                 // 나머지는 인증 필요
                 .anyRequest().authenticated()
             )

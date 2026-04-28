@@ -17,11 +17,10 @@ public class LibraryApiClient {
 
     private final WebClient.Builder webClientBuilder;
 
-    @Value("${library.api-key:NOT_SET}")
+    @Value("${data-library.api-key:NOT_SET}")
     private String apiKey;
 
     private static final String BASE_URL = "https://data4library.kr";
-    private static final int DEFAULT_PAGE_SIZE = 10;
 
     private final XmlMapper xmlMapper = new XmlMapper();
 
@@ -128,34 +127,6 @@ public class LibraryApiClient {
                         .queryParam("region", "11")
                         .queryParam("pageNo", pageNo)
                         .queryParam("pageSize", pageSize)
-                        .build())
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
-
-        return parseXml(xml);
-    }
-
-    /**
-     * 도서관별 장서/대출 데이터 조회
-     * GET /api/itemSrch
-     */
-    public LibraryApiResponse getBookHoldings(
-            String libraryCode, int pageNo, int pageSize) {
-        if (isApiKeyNotSet()) return null;
-
-        log.info("[LibraryApiClient] 장서/대출 조회 libraryCode={} pageNo={}",
-                libraryCode, pageNo);
-
-        String xml = webClientBuilder.baseUrl(BASE_URL).build()
-                .get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/api/itemSrch")
-                        .queryParam("authKey", apiKey)
-                        .queryParam("libCode", libraryCode)
-                        .queryParam("pageNo", pageNo)
-                        .queryParam("pageSize", pageSize)
-                        .queryParam("type", "ALL")
                         .build())
                 .retrieve()
                 .bodyToMono(String.class)

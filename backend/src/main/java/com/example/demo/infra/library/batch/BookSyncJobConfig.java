@@ -27,8 +27,7 @@ import java.util.Map;
  *   bookSyncJob
  *     ├── Step1: monthlyPopularStep  → 인기대출도서 → books + monthly_popular_book
  *     ├── Step2: bookDetailStep      → description 없는 books → 상세조회 → 업데이트
- *     ├── Step3: librarySyncStep     → 도서관 목록 → libraries
- *     └── Step4: bookHoldingSyncStep → 장서/대출 → book_holdings
+ *     └── Step3: librarySyncStep     → 도서관 목록 → libraries
  */
 @Slf4j
 @Configuration
@@ -44,11 +43,7 @@ public class BookSyncJobConfig {
     private final LibrarySyncItemReader librarySyncItemReader;
     private final LibrarySyncItemWriter librarySyncItemWriter;
 
-    private final BookHoldingSyncItemReader bookHoldingSyncItemReader;
-    private final BookHoldingSyncItemWriter bookHoldingSyncItemWriter;
-
     private final BookDetailItemWriter bookDetailItemWriter;
-
     private final BookRepository bookRepository;
 
     private static final int CHUNK_SIZE = 10;
@@ -62,7 +57,6 @@ public class BookSyncJobConfig {
                 .start(monthlyPopularStep())
                 .next(bookDetailStep())
                 .next(librarySyncStep())
-                .next(bookHoldingSyncStep())
                 .build();
     }
 
@@ -95,10 +89,6 @@ public class BookSyncJobConfig {
                 .build();
     }
 
-    /**
-     * description이 null인 Book만 읽어오는 Reader
-     * RepositoryItemReader: Spring Data의 Pageable 기반으로 청크 단위 조회
-     */
     @Bean
     public RepositoryItemReader<Book> bookDetailItemReader() {
         return new RepositoryItemReaderBuilder<Book>()
@@ -122,21 +112,6 @@ public class BookSyncJobConfig {
                 .faultTolerant()
                 .skip(Exception.class)
                 .skipLimit(10)
-                .build();
-    }
-
-    // ── Step 4: 장서/대출 현황 적재 ───────────────────────────────────────
-
-    @Bean
-    public Step bookHoldingSyncStep() {
-        return new StepBuilder("bookHoldingSyncStep", jobRepository)
-                .<LibraryApiResponse.HoldingItem, LibraryApiResponse.HoldingItem>chunk(
-                        CHUNK_SIZE, transactionManager)
-                .reader(bookHoldingSyncItemReader)
-                .writer(bookHoldingSyncItemWriter)
-                .faultTolerant()
-                .skip(Exception.class)
-                .skipLimit(50)
                 .build();
     }
 }

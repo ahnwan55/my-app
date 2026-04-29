@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: bookjjeok
+
+resources:
+  - ../../base/backend-deployment.yaml
+  - ../../base/backend-configmap.yaml
+  - ../../base/backend-external-secret.yaml
+  - ../../base/external-secret-store.yaml
+  - ../../base/backend-hpa.yaml
+  - backend-service.yaml
+  - ingress.yaml

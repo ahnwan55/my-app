@@ -6,7 +6,7 @@ metadata:
   labels:
     app: ai-server
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: ai-server
@@ -20,3 +20,10 @@ spec:
         image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_ai:latest
         ports:
         - containerPort: 8000
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi

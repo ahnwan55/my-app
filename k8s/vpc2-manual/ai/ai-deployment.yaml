@@ -15,6 +15,8 @@ spec:
       labels:
         app: ai-server
     spec:
+      imagePullSecrets:
+      - name: ecr-secret
       containers:
       - name: ai-server
         image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_ai:latest

@@ -58,5 +58,16 @@ aws:
 
 data-library:
   api-key: ${LIBRARY_API_KEY}
+
 ai-server:
   url: ${AI_SERVER_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true

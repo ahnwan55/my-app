@@ -4,5 +4,6 @@ kind: Kustomization
 namespace: bookjjeok
 
 resources:
-  - ai
-  - backend
+  - ai-deployment.yaml
+  - ai-service.yaml
+  - ai-hpa.yaml

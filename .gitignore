@@ -11,7 +11,6 @@ docker-compose.override.yml
 # ──────────────────────────────
 # Spring Boot
 # ──────────────────────────────
-backend/src/main/resources/application.yml
 backend/src/main/resources/application-prod.yml
 backend/src/main/resources/application-local.yml
 backend/src/main/resources/application-staging.yml
@@ -36,7 +35,6 @@ backend/src/main/generated/
 # ──────────────────────────────
 ai-server/venv/
 ai-server/.env
-ai-server/chroma_data/
 ai-server/models/
 *.gguf
 *.bin
@@ -93,3 +91,9 @@ Thumbs.db
 # ──────────────────────────────
 **/application-local.yml
 **/application-local.yaml
+
+# ──────────────────────────────
+# HuggingFace 모델 캐시
+# ──────────────────────────────
+ai-server/.cache/
+~/.cache/huggingface/

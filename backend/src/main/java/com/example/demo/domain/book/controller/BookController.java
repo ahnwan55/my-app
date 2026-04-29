@@ -16,11 +16,14 @@ import java.util.List;
  * 변경 사항:
  *   - BookGenre 제거 → kdc(한국십진분류법 코드) 기반 장르 필터로 교체
  *     예: kdc=813 (한국소설), kdc=840 (영미소설), kdc=320 (경제학)
+ *   - keyword 파라미터 추가 → 제목/저자 키워드 검색 지원
  *
  * 엔드포인트 목록:
- *   GET /api/books                → 전체/kdc별 도서 목록
- *   GET /api/books/{id}           → 도서 단건 조회
- *   GET /api/books/ranking        → 연령대/성별 인기 대출 랭킹
+ *   GET /api/books                         → 전체 도서 목록
+ *   GET /api/books?keyword={keyword}       → 키워드 검색 (제목/저자)
+ *   GET /api/books?kdc={kdc}              → KDC 코드 장르 필터
+ *   GET /api/books/{id}                    → 도서 단건 조회
+ *   GET /api/books/ranking                 → 연령대/성별 인기 대출 랭킹
  */
 @RestController
 @RequestMapping("/api/books")
@@ -31,14 +34,19 @@ public class BookController {
     private final BookRankingService bookRankingService;
 
     /**
-     * 도서 목록 조회
-     * GET /api/books
-     * GET /api/books?kdc=813   → KDC 코드로 장르 필터링
+     * 도서 목록 조회 / 키워드 검색
+     *
+     * GET /api/books                         → 전체 조회
+     * GET /api/books?keyword=한강            → 제목 또는 저자에 "한강" 포함된 도서
+     * GET /api/books?kdc=813                 → KDC 813번대 도서 (한국소설)
+     *
+     * keyword와 kdc가 동시에 전달되면 keyword가 우선 적용된다.
      */
     @GetMapping
     public ResponseEntity<List<BookDto.BookResponse>> getBooks(
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String kdc) {
-        return ResponseEntity.ok(bookService.getBooks(kdc));
+        return ResponseEntity.ok(bookService.getBooks(keyword, kdc));
     }
 
     /**

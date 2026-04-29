@@ -4,10 +4,19 @@ from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 # 환경변수에서 DB 연결 정보를 읽어옴
 # .env 파일 또는 Docker Compose environment 블록에서 주입
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/bookjjeok"
-)
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_URL = os.getenv("DB_URL") # e.g. jdbc:postgresql://host:5432/bookjjeok
+
+if DB_USER and DB_PASSWORD and DB_URL:
+    db_url_clean = DB_URL.replace("jdbc:", "")
+    parts = db_url_clean.split("://")
+    DATABASE_URL = f"{parts[0]}://{DB_USER}:{DB_PASSWORD}@{parts[1]}"
+else:
+    DATABASE_URL = os.getenv(
+        "DATABASE_URL",
+        "postgresql://postgres:postgres@localhost:5432/bookjjeok"
+    )
 
 # SQLAlchemy 엔진 생성
 # pool_pre_ping: 커넥션 유효성을 쿼리 전에 확인하여 끊긴 커넥션 방지

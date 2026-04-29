@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - hong
     paths:
       - 'ai-server/**'
 
@@ -43,12 +44,12 @@ jobs:
           ECR_REPOSITORY: ${{ secrets.AI_ECR_REPOSITORY_NAME }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          # base 경로의 Deployment 매니페스트 이미지 태그 업데이트
           sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/base/ai-deployment.yaml
+          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/vpc1-eks/ai/ai-deployment.yaml
+          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/vpc2-manual/ai/ai-deployment.yaml
           
-          # 변경사항 Git 푸시
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          git add k8s/base/ai-deployment.yaml
+          git add k8s/base/ai-deployment.yaml k8s/vpc1-eks/ai/ai-deployment.yaml k8s/vpc2-manual/ai/ai-deployment.yaml
           git commit -m "chore: update ai-server image tag to $IMAGE_TAG [skip ci]"
           git push

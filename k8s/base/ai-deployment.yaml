@@ -20,6 +20,9 @@ spec:
         image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_ai:latest
         ports:
         - containerPort: 8000
+        envFrom:
+        - secretRef:
+            name: backend-secrets
         resources:
           requests:
             cpu: 100m

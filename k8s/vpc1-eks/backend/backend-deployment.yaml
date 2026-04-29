@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: default
+  labels:
+    app: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+      annotations:
+        kubectl.kubernetes.io/restartedAt: "2026-04-27T16:23"
+    spec:
+      containers:
+      - name: backend
+        image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_be:404fb64a43176b8c90b2711f24815c0ad366fc20
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 20
+        envFrom:
+        - configMapRef:
+            name: backend-config
+        - secretRef:
+            name: backend-secrets

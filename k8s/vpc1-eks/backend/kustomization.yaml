@@ -4,10 +4,10 @@ kind: Kustomization
 namespace: bookjjeok
 
 resources:
-  - ../../base/backend-deployment.yaml
-  - ../../base/backend-configmap.yaml
-  - ../../base/backend-external-secret.yaml
-  - ../../base/external-secret-store.yaml
-  - ../../base/backend-hpa.yaml
+  - backend-deployment.yaml
+  - backend-configmap.yaml
+  - backend-external-secret.yaml
+  - external-secret-store.yaml
+  - backend-hpa.yaml
   - backend-service.yaml
   - ingress.yaml

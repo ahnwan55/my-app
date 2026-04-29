@@ -26,17 +26,16 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-batch'
 
-
 	// pgvector
 	implementation 'com.pgvector:pgvector:0.1.4'
 
-	// OAuth2 카카오 로그인 ← 여기 추가
+	// OAuth2 카카오 로그인
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
 	// WebClient
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
-	// AWS Bedrock ← 추가
+	// AWS Bedrock
 	implementation platform('software.amazon.awssdk:bom:2.25.11')
 	implementation 'software.amazon.awssdk:bedrockruntime'
 	implementation 'software.amazon.awssdk:auth'
@@ -77,6 +76,11 @@ dependencies {
 
 	// XML 파싱 (정보나루 API XML 응답 처리)
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+
+	// Prometheus 메트릭 노출 (Grafana 모니터링 연동용)
+	// Actuator의 /actuator/prometheus 엔드포인트를 활성화하여
+	// Prometheus가 HTTP 요청 수, 응답시간, 에러율 등을 수집할 수 있게 함
+	implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {

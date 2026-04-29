@@ -59,7 +59,7 @@ export default function LoginPage() {
         {/* 로고 */}
         <div style={S.logoWrap}>
           <div style={S.logoIcon}>📚</div>
-          <h1 style={S.logoText}>LibraryHub</h1>
+          <h1 style={S.logoText}>북적북적</h1>
           <p style={S.logoSub}>독서 페르소나 기반 도서 추천 플랫폼</p>
         </div>
 

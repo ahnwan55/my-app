@@ -22,8 +22,6 @@ spec:
         image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_be:a45922e684391c6c9af3395ea30d225c5e0835a7
         ports:
         - containerPort: 8080
-<<<<<<< HEAD
-=======
         resources:
           requests:
             cpu: 200m
@@ -31,7 +29,6 @@ spec:
           limits:
             cpu: 1000m
             memory: 2Gi
->>>>>>> 2d6692c (feat: split k8s manifests, scale AI to 2 replicas, and add HPA)
         readinessProbe:
           httpGet:
             path: /actuator/health

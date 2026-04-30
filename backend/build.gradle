@@ -27,7 +27,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-batch'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'io.micrometer:micrometer-tracing-bridge-otel'
-	implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter'
+	implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:2.9.0'
 
 
 	// pgvector

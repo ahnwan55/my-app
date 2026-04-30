@@ -10,4 +10,4 @@ resources:
   - backend-service.yaml
   - secret-store.yaml
   - external-secret.yaml
-  - ecr-secret.yaml
+  - ecr-cronjob.yaml

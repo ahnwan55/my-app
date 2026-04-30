@@ -83,4 +83,4 @@ management:
 otel:
   exporter:
     otlp:
-      endpoint: http://172.20.141.155:4317
+      endpoint: http://10.2.0.225:4317

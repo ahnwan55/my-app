@@ -84,3 +84,4 @@ otel:
   exporter:
     otlp:
       endpoint: http://10.2.0.225:4317
+      protocol: grpc

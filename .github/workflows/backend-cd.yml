@@ -61,15 +61,13 @@ jobs:
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          # 모든 환경의 Deployment 매니페스트 이미지 태그 업데이트
-          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/base/backend-deployment.yaml
-          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/vpc1-eks/backend/backend-deployment.yaml
-          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/vpc2-manual/backend/backend-deployment.yaml
+          # Helm 차트의 values.yaml에서 image tag 업데이트
+          sed -i "s|tag: .*|tag: \"$IMAGE_TAG\"|g" charts/backend/values.yaml
           
           # 변경사항 Git 푸시
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          git add k8s/base/backend-deployment.yaml k8s/vpc1-eks/backend/backend-deployment.yaml k8s/vpc2-manual/backend/backend-deployment.yaml
+          git add charts/backend/values.yaml
           git commit -m "chore: update backend image tag to $IMAGE_TAG [skip ci]"
           git push
   

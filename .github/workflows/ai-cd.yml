@@ -44,12 +44,10 @@ jobs:
           ECR_REPOSITORY: ${{ secrets.AI_ECR_REPOSITORY_NAME }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/base/ai-deployment.yaml
-          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/vpc1-eks/ai/ai-deployment.yaml
-          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/vpc2-manual/ai/ai-deployment.yaml
+          sed -i "s|tag: .*|tag: \"$IMAGE_TAG\"|g" charts/ai/values.yaml
           
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          git add k8s/base/ai-deployment.yaml k8s/vpc1-eks/ai/ai-deployment.yaml k8s/vpc2-manual/ai/ai-deployment.yaml
+          git add charts/ai/values.yaml
           git commit -m "chore: update ai-server image tag to $IMAGE_TAG [skip ci]"
           git push

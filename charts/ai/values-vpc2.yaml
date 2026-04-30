@@ -1,0 +1,4 @@
+imagePullSecrets:
+  - name: ecr-secret
+service:
+  type: LoadBalancer

@@ -12,6 +12,8 @@ import UserInfoPage from "./pages/UserInfoPage";
 import MyPage from "./pages/MyPage";
 import RankingPage from "./pages/RankingPage";
 import SearchPage from "./pages/SearchPage";
+import InventoryPage from "./pages/InventoryPage";
+import BookDetailPage from "./pages/BookDetailPage";
 
 /**
  * App.jsx — 라우팅 설정
@@ -40,34 +42,27 @@ import SearchPage from "./pages/SearchPage";
  *  /ranking       → RankingPage
  *  /search        → SearchPage
  *  /mypage        → MyPage
+ *  /inventory     → InventoryPage
+ *  /bookdetail    → BookDetailPage
  */
 export default function App() {
     const [surveyAnswers, setSurveyAnswers] = useState({});
     const [personaCode,   setPersonaCode]   = useState("EXPLORER");
     const [personaName,   setPersonaName]   = useState("지적 탐험가");
-    // scores는 LoadingPage → navigate("/result", { state: { scores } }) 로 전달
-    // PersonaResultPage에서 useLocation().state?.scores 로 수신하므로 App state 불필요
 
     // ── 인증 상태 ──────────────────────────────────────────────────────
-    const [authChecked, setAuthChecked] = useState(false); // 인증 확인 완료 여부
-    const [isLoggedIn,  setIsLoggedIn]  = useState(false); // 로그인 상태 여부
+    const [authChecked, setAuthChecked] = useState(false);
+    const [isLoggedIn,  setIsLoggedIn]  = useState(false);
 
-    /**
-     * 마운트 시 인증 상태 확인
-     * POST /api/auth/refresh 호출:
-     *  - 200: accessToken 쿠키 갱신 성공 → 로그인 상태
-     *  - 401: refreshToken 없거나 만료   → 미로그인 → /login 리다이렉트
-     */
     useEffect(() => {
         const checkAuth = async () => {
             try {
                 const res = await fetch("/api/auth/refresh", {
                     method: "POST",
-                    credentials: "include", // httpOnly 쿠키 자동 포함
+                    credentials: "include",
                 });
                 setIsLoggedIn(res.ok);
             } catch {
-                // 네트워크 오류 등 예외 → 미로그인으로 처리
                 setIsLoggedIn(false);
             } finally {
                 setAuthChecked(true);
@@ -76,7 +71,6 @@ export default function App() {
         checkAuth();
     }, []);
 
-    // ── 인증 확인 전 — 로딩 스피너 표시 ──────────────────────────────
     if (!authChecked) {
         return (
             <div style={S.loadingWrap}>
@@ -99,6 +93,14 @@ export default function App() {
                 <Route path="/user-info" element={<UserInfoPage />} />
 
                 {/* 보호 라우트 — 미로그인 시 /login으로 리다이렉트 */}
+                <Route path="/inventory"
+                       element={isLoggedIn ? <InventoryPage /> : <Navigate to="/login" replace />}
+                />
+
+                <Route path="/books/:bookId"
+                       element={isLoggedIn ? <BookDetailPage /> : <Navigate to="/login" replace />}
+                />
+
                 <Route path="/"
                        element={isLoggedIn ? <Main /> : <Navigate to="/login" replace />}
                 />
@@ -165,13 +167,6 @@ function Survey({ setSurveyAnswers }) {
     );
 }
 
-/**
- * Loading 래퍼
- * LoadingPage에서 POST /api/surveys/submit 응답 수신 후
- * onComplete(code, name, scores) 형태로 호출
- * scores는 navigate state로 PersonaResultPage에 전달
- * → PersonaResultPage에서 useLocation().state?.scores 로 수신
- */
 function Loading({ surveyAnswers, setPersonaCode, setPersonaName }) {
     const navigate = useNavigate();
     return (

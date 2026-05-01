@@ -41,7 +41,9 @@ public class SecurityConfig {
                             "/actuator/**",
                             "/api/auth/**",
                             "/login/**",
-                            "/oauth2/**"
+                            "/oauth2/**",
+                            "/api/books/**",
+                            "/api/inventory"
                     ).permitAll()
                 // 나머지는 인증 필요
                 .anyRequest().authenticated()

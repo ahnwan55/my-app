@@ -9,11 +9,12 @@ import { useNavigate } from "react-router-dom";
  *  - 초기 진입 시 책 목록 미표시 (검색 후에만 결과 표시)
  *  - 로딩/에러 상태 처리 추가
  *  - 장르 필터는 검색 결과 내에서 프론트 필터링 (추가 API 호출 없음)
+ *  - 도서 카드 클릭 시 /books/:bookId(상세 페이지)로 이동
  *
  * 검색 흐름:
  *  1. 키워드 입력 → 검색 버튼 클릭 또는 Enter
  *  2. GET /api/books?keyword={keyword} 호출
- *  3. 결과 표시 (제목, 저자, KDC, 커버 이미지)
+ *  3. 결과 표시 → 카드 클릭 → BookDetailPage로 이동
  *
  * 컬러: 벚꽃 핑크(#f472b6) × 퍼플(#a855f7)
  */
@@ -38,16 +39,18 @@ const C = {
 export default function SearchPage() {
   const navigate = useNavigate();
 
-  const [keyword, setKeyword] = useState("");   // 입력 중인 키워드
-  const [books,   setBooks]   = useState([]);   // 검색 결과
-  const [searched, setSearched] = useState(false); // 검색 실행 여부
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState(null);
+  const [keyword,  setKeyword]  = useState("");
+  const [books,    setBooks]    = useState([]);
+  const [searched, setSearched] = useState(false);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState(null);
+
+  // 카드 hover 상태 (bookId → boolean)
+  const [hoveredId, setHoveredId] = useState(null);
 
   /**
    * 검색 실행
    * GET /api/books?keyword={keyword} 호출
-   * credentials: "include" → httpOnly 쿠키 자동 포함 (인증 유지)
    */
   const handleSearch = async () => {
     const trimmed = keyword.trim();
@@ -137,9 +140,7 @@ export default function SearchPage() {
           {/* 검색 결과 */}
           {searched && !loading && !error && (
               <>
-                <p style={styles.resultCount}>
-                  검색 결과 {books.length}권
-                </p>
+                <p style={styles.resultCount}>검색 결과 {books.length}권</p>
 
                 {books.length === 0 ? (
                     <div style={styles.guide}>
@@ -149,8 +150,20 @@ export default function SearchPage() {
                 ) : (
                     <div style={styles.list}>
                       {books.map((book, idx) => (
-                          <div key={book.bookId ?? idx} style={styles.bookCard}>
-
+                          <div
+                              key={book.bookId ?? idx}
+                              style={{
+                                ...styles.bookCard,
+                                // hover 시 배경색을 살짝 진하게 바꿔 클릭 가능함을 표시한다.
+                                background: hoveredId === book.bookId
+                                    ? "rgba(252,231,243,0.6)"
+                                    : "transparent",
+                                cursor: "pointer",
+                              }}
+                              onClick={() => navigate(`/books/${book.bookId}`)}
+                              onMouseEnter={() => setHoveredId(book.bookId)}
+                              onMouseLeave={() => setHoveredId(null)}
+                          >
                             {/* 책 커버 */}
                             {book.coverUrl ? (
                                 <img
@@ -175,6 +188,8 @@ export default function SearchPage() {
                               )}
                             </div>
 
+                            {/* 상세 보기 화살표 */}
+                            <span style={styles.arrow}>→</span>
                           </div>
                       ))}
                     </div>
@@ -205,7 +220,6 @@ const styles = {
   headerLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", color: C.pink, textTransform: "uppercase" },
   title: { fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 800, color: C.gray800, margin: "0 0 20px" },
 
-  /* 검색 박스 */
   searchBox: { display: "flex", gap: 8, marginBottom: 20 },
   searchInput: {
     flex: 1, padding: "13px 16px",
@@ -222,14 +236,12 @@ const styles = {
     whiteSpace: "nowrap",
   },
 
-  /* 안내 영역 */
   guide:     { textAlign: "center", padding: "48px 0" },
   guideText: { fontSize: 13, color: C.gray400, lineHeight: 1.8, marginTop: 12 },
   errorText: { fontSize: 12, color: "#ef4444", textAlign: "center", padding: "12px 0" },
 
   resultCount: { fontSize: 12, fontWeight: 700, color: C.gray500, marginBottom: 12 },
 
-  /* 책 리스트 */
   list: {
     background: "rgba(255,255,255,0.7)",
     backdropFilter: "blur(12px)",
@@ -240,6 +252,7 @@ const styles = {
     display: "flex", alignItems: "center", gap: 14,
     padding: "14px 16px",
     borderBottom: `1px solid ${C.gray100}`,
+    transition: "background 0.15s ease",
   },
   bookCoverImg: {
     width: 44, height: 60, borderRadius: 8, flexShrink: 0,
@@ -257,5 +270,10 @@ const styles = {
   kdcTag: {
     fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
     background: C.purpleLight, color: C.purpleDark,
+  },
+  // 카드 우측 화살표 — 클릭 가능함을 시각적으로 안내한다.
+  arrow: {
+    flexShrink: 0, fontSize: 14,
+    color: C.pink, fontWeight: 700,
   },
 };

@@ -18,41 +18,23 @@ import BookDetailPage from "./pages/BookDetailPage";
 /**
  * App.jsx — 라우팅 설정
  *
- * state 흐름:
- *  surveyAnswers → LoadingPage → POST /api/surveys/submit
- *  personaCode   → PersonaResultPage (서브 페르소나 코드, 예: TREND_SURFER)
- *  personaName   → PersonaResultPage, BookLoadingPage, BookResultPage
- *  scores        → PersonaResultPage (Radar Chart용 6대 지표 점수)
- *                  { 지적_확장성: 8.5, 분석적_깊이: 4.0, ... }
- *
  * 인증 흐름:
- *  마운트 시 POST /api/auth/refresh 호출
- *  → 200: 로그인 상태 → 정상 라우팅
- *  → 401: 미로그인   → /login 리다이렉트
- *
- * 라우트 목록:
- *  /              → MainPage
- *  /login         → LoginPage
- *  /user-info     → UserInfoPage
- *  /survey        → SurveyPage
- *  /loading       → LoadingPage  (POST /api/surveys/submit 호출)
- *  /result        → PersonaResultPage
- *  /book-loading  → BookLoadingPage
- *  /books         → BookResultPage
- *  /ranking       → RankingPage
- *  /search        → SearchPage
- *  /mypage        → MyPage
- *  /inventory     → InventoryPage
- *  /bookdetail    → BookDetailPage
+ *  1. POST /api/auth/refresh → 로그인 여부 확인
+ *  2. 로그인 상태이면 GET /api/users/me → 프로필 조회
+ *  3. gender가 null이면 → /user-info 로 리다이렉트 (최초 1회 프로필 설정)
+ *  4. gender가 있으면 → 정상 라우팅
  */
 export default function App() {
     const [surveyAnswers, setSurveyAnswers] = useState({});
     const [personaCode,   setPersonaCode]   = useState("EXPLORER");
     const [personaName,   setPersonaName]   = useState("지적 탐험가");
 
-    // ── 인증 상태 ──────────────────────────────────────────────────────
-    const [authChecked, setAuthChecked] = useState(false);
-    const [isLoggedIn,  setIsLoggedIn]  = useState(false);
+    const [authChecked,    setAuthChecked]    = useState(false);
+    const [isLoggedIn,     setIsLoggedIn]     = useState(false);
+    const [profileChecked, setProfileChecked] = useState(false);
+
+    // gender가 null이면 최초 로그인 → UserInfoPage로 이동
+    const [needsProfile,   setNeedsProfile]   = useState(false);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -61,9 +43,32 @@ export default function App() {
                     method: "POST",
                     credentials: "include",
                 });
-                setIsLoggedIn(res.ok);
+
+                if (res.ok) {
+                    setIsLoggedIn(true);
+
+                    try {
+                        const meRes = await fetch("/api/users/me", {
+                            credentials: "include",
+                        });
+                        if (meRes.ok) {
+                            const me = await meRes.json();
+                            setNeedsProfile(!me.gender);
+                        } else {
+                            setNeedsProfile(true);
+                        }
+                    } catch {
+                        setNeedsProfile(true);
+                    } finally {
+                        setProfileChecked(true);
+                    }
+                } else {
+                    setIsLoggedIn(false);
+                    setProfileChecked(true);
+                }
             } catch {
                 setIsLoggedIn(false);
+                setProfileChecked(true);
             } finally {
                 setAuthChecked(true);
             }
@@ -71,7 +76,7 @@ export default function App() {
         checkAuth();
     }, []);
 
-    if (!authChecked) {
+    if (!authChecked || !profileChecked) {
         return (
             <div style={S.loadingWrap}>
                 <div style={S.spinner} />
@@ -89,62 +94,47 @@ export default function App() {
         <BrowserRouter>
             <Routes>
                 {/* 인증 — 항상 접근 가능 */}
-                <Route path="/login"     element={<LoginPage />} />
-                <Route path="/user-info" element={<UserInfoPage />} />
+                <Route path="/login" element={<LoginPage />} />
 
-                {/* 보호 라우트 — 미로그인 시 /login으로 리다이렉트 */}
-                <Route path="/inventory"
-                       element={isLoggedIn ? <InventoryPage /> : <Navigate to="/login" replace />}
-                />
+                {/*
+                  /user-info
+                  - 미로그인 → /login
+                  - 프로필 이미 설정 → /
+                  - 프로필 미설정 → UserInfoPage
+                */}
+                <Route path="/user-info" element={
+                    !isLoggedIn   ? <Navigate to="/login" replace /> :
+                    !needsProfile ? <Navigate to="/" replace /> :
+                    <UserInfoPage onComplete={() => setNeedsProfile(false)} />
+                } />
 
-                <Route path="/books/:bookId"
-                       element={isLoggedIn ? <BookDetailPage /> : <Navigate to="/login" replace />}
-                />
-
-                <Route path="/"
-                       element={isLoggedIn ? <Main /> : <Navigate to="/login" replace />}
-                />
-                <Route path="/survey"
-                       element={isLoggedIn
-                           ? <Survey setSurveyAnswers={setSurveyAnswers} />
-                           : <Navigate to="/login" replace />}
-                />
-                <Route path="/loading"
-                       element={isLoggedIn
-                           ? <Loading
-                               surveyAnswers={surveyAnswers}
-                               setPersonaCode={setPersonaCode}
-                               setPersonaName={setPersonaName}
-                           />
-                           : <Navigate to="/login" replace />}
-                />
-                <Route path="/result"
-                       element={isLoggedIn
-                           ? <Result personaCode={personaCode} />
-                           : <Navigate to="/login" replace />}
-                />
-                <Route path="/book-loading"
-                       element={isLoggedIn
-                           ? <BookLoading personaName={personaName} />
-                           : <Navigate to="/login" replace />}
-                />
-                <Route path="/books"
-                       element={isLoggedIn
-                           ? <Books personaName={personaName} />
-                           : <Navigate to="/login" replace />}
-                />
-                <Route path="/ranking"
-                       element={isLoggedIn ? <RankingPage /> : <Navigate to="/login" replace />}
-                />
-                <Route path="/search"
-                       element={isLoggedIn ? <SearchPage />  : <Navigate to="/login" replace />}
-                />
-                <Route path="/mypage"
-                       element={isLoggedIn ? <MyPage />      : <Navigate to="/login" replace />}
-                />
+                {/* 보호 라우트 헬퍼 */}
+                <Route path="/"            element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Main /></Protected>} />
+                <Route path="/survey"      element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Survey setSurveyAnswers={setSurveyAnswers} /></Protected>} />
+                <Route path="/loading"     element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Loading surveyAnswers={surveyAnswers} setPersonaCode={setPersonaCode} setPersonaName={setPersonaName} /></Protected>} />
+                <Route path="/result"      element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Result personaCode={personaCode} /></Protected>} />
+                <Route path="/book-loading" element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><BookLoading personaName={personaName} /></Protected>} />
+                <Route path="/books"       element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Books personaName={personaName} /></Protected>} />
+                <Route path="/books/:bookId" element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><BookDetailPage /></Protected>} />
+                <Route path="/ranking"     element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><RankingPage /></Protected>} />
+                <Route path="/search"      element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><SearchPage /></Protected>} />
+                <Route path="/mypage"      element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><MyPage /></Protected>} />
+                <Route path="/inventory"   element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><InventoryPage /></Protected>} />
             </Routes>
         </BrowserRouter>
     );
+}
+
+/**
+ * 보호 라우트 래퍼
+ * - 미로그인 → /login
+ * - 프로필 미설정 → /user-info
+ * - 정상 → children 렌더링
+ */
+function Protected({ isLoggedIn, needsProfile, children }) {
+    if (!isLoggedIn)   return <Navigate to="/login"     replace />;
+    if (needsProfile)  return <Navigate to="/user-info" replace />;
+    return children;
 }
 
 /* ────────────────────────────────────────
@@ -205,9 +195,6 @@ function Books({ personaName }) {
     return <BookResultPage personaName={personaName} />;
 }
 
-/* ────────────────────────────────────────
-   인증 확인 중 로딩 스피너 스타일
-   ──────────────────────────────────────── */
 const S = {
     loadingWrap: {
         minHeight: "100vh",

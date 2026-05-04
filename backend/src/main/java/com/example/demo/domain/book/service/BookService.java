@@ -3,9 +3,9 @@ package com.example.demo.domain.book.service;
 import com.example.demo.domain.book.dto.BookDto;
 import com.example.demo.domain.book.entity.Book;
 import com.example.demo.domain.book.repository.BookRepository;
+import com.example.demo.infra.kakao.KakaoBookClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,10 +23,10 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class BookService {
 
-    private final BookRepository bookRepository;
+    private final KakaoBookClient kakaoBookClient;
+    private final BookRepository bookRepository; // 필요한 경우를 위해 남겨둠
 
     /**
      * 도서 목록 조회
@@ -40,25 +40,33 @@ public class BookService {
      * @param kdc     KDC 코드 앞자리 (예: "813", "840", "320")
      */
     public List<BookDto.BookResponse> getBooks(String keyword, String kdc) {
-        List<Book> books;
-
+        // 1. 키워드가 있으면 카카오 도서 검색 API 호출
         if (keyword != null && !keyword.isBlank()) {
-            // 키워드 검색: 제목 또는 저자에 keyword가 포함된 도서 조회
-            // 같은 keyword를 title, author 양쪽에 전달 (OR 조건)
-            books = bookRepository
-                    .findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(
-                            keyword, keyword);
-        } else if (kdc != null && !kdc.isBlank()) {
-            // KDC 코드 앞자리 매칭으로 장르 필터링
-            books = bookRepository.findByKdcStartingWith(kdc);
-        } else {
-            // 필터 없음 → 전체 조회
-            books = bookRepository.findAll();
+            return kakaoBookClient.search(keyword, 50);
+        } 
+        
+        // 2. KDC 코드만 넘어온 경우 키워드로 매핑하여 카카오 API 호출
+        if (kdc != null && !kdc.isBlank()) {
+            String categoryKeyword = mapKdcToKeyword(kdc);
+            return kakaoBookClient.search(categoryKeyword, 50);
         }
 
-        return books.stream()
-                .map(BookDto.BookResponse::of)
-                .toList();
+        // 3. 아무 조건이 없으면 기본 추천 키워드로 검색 (빈 화면 방지)
+        return kakaoBookClient.search("베스트셀러", 50);
+    }
+    
+    private String mapKdcToKeyword(String kdc) {
+        if (kdc.startsWith("813")) return "한국소설";
+        if (kdc.startsWith("840")) return "영미소설";
+        if (kdc.startsWith("320")) return "경제학";
+        if (kdc.startsWith("100")) return "철학";
+        if (kdc.startsWith("300")) return "사회과학";
+        if (kdc.startsWith("400")) return "자연과학";
+        if (kdc.startsWith("500")) return "기술과학";
+        if (kdc.startsWith("600")) return "예술";
+        if (kdc.startsWith("800")) return "문학";
+        if (kdc.startsWith("900")) return "역사";
+        return "교양";
     }
 
     /**
@@ -68,9 +76,16 @@ public class BookService {
      * @throws IllegalArgumentException 도서가 없을 때
      */
     public BookDto.BookResponse getBook(String bookId) {
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "도서를 찾을 수 없습니다: " + bookId));
-        return BookDto.BookResponse.of(book);
+        // ISBN-13 (bookId)을 키워드로 카카오 API 단건 검색
+        List<BookDto.BookResponse> results = kakaoBookClient.search(bookId, 1);
+        
+        if (results.isEmpty()) {
+            // 카카오 검색 실패 시 DB에서 폴백(Fallback) 조회
+            Book book = bookRepository.findById(bookId)
+                    .orElseThrow(() -> new IllegalArgumentException("도서를 찾을 수 없습니다: " + bookId));
+            return BookDto.BookResponse.of(book);
+        }
+        
+        return results.get(0);
     }
 }

@@ -4,9 +4,13 @@ on:
   push:
     branches:
       - main
+      - hong
     paths:
       - 'backend/**'
 
+permissions:
+  contents: write
+  
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -57,13 +61,15 @@ jobs:
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          # Deployment 매니페스트의 이미지 태그 업데이트
-          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/backend-deployment.yaml
+          # 모든 환경의 Deployment 매니페스트 이미지 태그 업데이트
+          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/base/backend-deployment.yaml
+          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/vpc1-eks/backend/backend-deployment.yaml
+          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/vpc2-manual/backend/backend-deployment.yaml
           
           # 변경사항 Git 푸시
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          git add k8s/backend-deployment.yaml
+          git add k8s/base/backend-deployment.yaml k8s/vpc1-eks/backend/backend-deployment.yaml k8s/vpc2-manual/backend/backend-deployment.yaml
           git commit -m "chore: update backend image tag to $IMAGE_TAG [skip ci]"
           git push
   

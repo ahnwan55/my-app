@@ -96,27 +96,14 @@ public class LibraryApiResponse {
     @NoArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class LibItem {
-        private String libCode;       // 도서관 코드
-        private String libName;       // 도서관명
-        private String address;       // 주소
-        private String tel;           // 전화번호
-        private String latitude;      // 위도
-        private String longitude;     // 경도
-        private String homepage;      // 홈페이지
-        private String closed;        // 휴관일
-        private String operatingTime; // 운영시간
-    }
-
-    // ── 장서/대출 정보 ──────────────────────────────────────────────────
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class HoldingItem {
-        private String isbn13;        // ISBN-13
-        private String bookname;      // 도서명
-        private String loanAvailable; // 대출 가능 여부 (Y/N)
-        private String libCode;       // 도서관 코드
+        private String libCode;
+        private String libName;
+        private String address;
+        private String tel;
+        private String latitude;
+        private String longitude;
+        private String homepage;
+        private String closed;
+        private String operatingTime;
     }
 }

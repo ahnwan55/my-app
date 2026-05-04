@@ -23,12 +23,10 @@ import java.util.Map;
 /**
  * BookSyncJobConfig - 도서 데이터 수집 배치 Job 설정
  *
- * Job 구조:
- *   bookSyncJob
- *     ├── Step1: monthlyPopularStep  → 인기대출도서 → books + monthly_popular_book
- *     ├── Step2: bookDetailStep      → description 없는 books → 상세조회 → 업데이트
- *     ├── Step3: librarySyncStep     → 도서관 목록 → libraries
- *     └── Step4: bookHoldingSyncStep → 장서/대출 → book_holdings
+ * Job 3개로 분리:
+ *   librarySyncJob       → 매월 1일 02:00 → libraries 적재
+ *   monthlyPopularSyncJob → 매일 03:00    → books + monthly_popular_book 적재
+ *   bookDetailSyncJob    → 매일 04:00     → books.description 업데이트
  */
 @Slf4j
 @Configuration
@@ -44,73 +42,20 @@ public class BookSyncJobConfig {
     private final LibrarySyncItemReader librarySyncItemReader;
     private final LibrarySyncItemWriter librarySyncItemWriter;
 
-    private final BookHoldingSyncItemReader bookHoldingSyncItemReader;
-    private final BookHoldingSyncItemWriter bookHoldingSyncItemWriter;
-
     private final BookDetailItemWriter bookDetailItemWriter;
-
     private final BookRepository bookRepository;
 
     private static final int CHUNK_SIZE = 10;
 
-    // ── Job ───────────────────────────────────────────────────────────────
+    // ── Job 1: 도서관 목록 적재 (매월 1일 02:00) ──────────────────────────
 
     @Bean
-    public Job bookSyncJob() {
-        return new JobBuilder("bookSyncJob", jobRepository)
+    public Job librarySyncJob() {
+        return new JobBuilder("librarySyncJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
-                .start(monthlyPopularStep())
-                .next(bookDetailStep())
-                .next(librarySyncStep())
-                .next(bookHoldingSyncStep())
+                .start(librarySyncStep())
                 .build();
     }
-
-    // ── Step 1: 인기대출도서 적재 ──────────────────────────────────────────
-
-    @Bean
-    public Step monthlyPopularStep() {
-        return new StepBuilder("monthlyPopularStep", jobRepository)
-                .<LibraryApiResponse.BookItem, LibraryApiResponse.BookItem>chunk(
-                        CHUNK_SIZE, transactionManager)
-                .reader(monthlyPopularItemReader)
-                .writer(monthlyPopularItemWriter)
-                .faultTolerant()
-                .skip(Exception.class)
-                .skipLimit(10)
-                .build();
-    }
-
-    // ── Step 2: 도서 상세(description) 수집 ───────────────────────────────
-
-    @Bean
-    public Step bookDetailStep() {
-        return new StepBuilder("bookDetailStep", jobRepository)
-                .<Book, Book>chunk(CHUNK_SIZE, transactionManager)
-                .reader(bookDetailItemReader())
-                .writer(bookDetailItemWriter)
-                .faultTolerant()
-                .skip(Exception.class)
-                .skipLimit(20)
-                .build();
-    }
-
-    /**
-     * description이 null인 Book만 읽어오는 Reader
-     * RepositoryItemReader: Spring Data의 Pageable 기반으로 청크 단위 조회
-     */
-    @Bean
-    public RepositoryItemReader<Book> bookDetailItemReader() {
-        return new RepositoryItemReaderBuilder<Book>()
-                .name("bookDetailItemReader")
-                .repository(bookRepository)
-                .methodName("findByDescriptionIsNull")
-                .pageSize(CHUNK_SIZE)
-                .sorts(Map.of("bookId", Sort.Direction.ASC))
-                .build();
-    }
-
-    // ── Step 3: 도서관 목록 적재 ───────────────────────────────────────────
 
     @Bean
     public Step librarySyncStep() {
@@ -125,18 +70,59 @@ public class BookSyncJobConfig {
                 .build();
     }
 
-    // ── Step 4: 장서/대출 현황 적재 ───────────────────────────────────────
+    // ── Job 2: 이달의 인기대출 랭킹 적재 (매일 03:00) ─────────────────────
 
     @Bean
-    public Step bookHoldingSyncStep() {
-        return new StepBuilder("bookHoldingSyncStep", jobRepository)
-                .<LibraryApiResponse.HoldingItem, LibraryApiResponse.HoldingItem>chunk(
+    public Job monthlyPopularSyncJob() {
+        return new JobBuilder("monthlyPopularSyncJob", jobRepository)
+                .incrementer(new RunIdIncrementer())
+                .start(monthlyPopularStep())
+                .build();
+    }
+
+    @Bean
+    public Step monthlyPopularStep() {
+        return new StepBuilder("monthlyPopularStep", jobRepository)
+                .<LibraryApiResponse.BookItem, LibraryApiResponse.BookItem>chunk(
                         CHUNK_SIZE, transactionManager)
-                .reader(bookHoldingSyncItemReader)
-                .writer(bookHoldingSyncItemWriter)
+                .reader(monthlyPopularItemReader)
+                .writer(monthlyPopularItemWriter)
                 .faultTolerant()
                 .skip(Exception.class)
-                .skipLimit(50)
+                .skipLimit(10)
+                .build();
+    }
+
+    // ── Job 3: 도서 상세정보 수집 (매일 04:00) ────────────────────────────
+
+    @Bean
+    public Job bookDetailSyncJob() {
+        return new JobBuilder("bookDetailSyncJob", jobRepository)
+                .incrementer(new RunIdIncrementer())
+                .start(bookDetailStep())
+                .build();
+    }
+
+    @Bean
+    public Step bookDetailStep() {
+        return new StepBuilder("bookDetailStep", jobRepository)
+                .<Book, Book>chunk(CHUNK_SIZE, transactionManager)
+                .reader(bookDetailItemReader())
+                .writer(bookDetailItemWriter)
+                .faultTolerant()
+                .skip(Exception.class)
+                .skipLimit(20)
+                .build();
+    }
+
+    @Bean
+    public RepositoryItemReader<Book> bookDetailItemReader() {
+        return new RepositoryItemReaderBuilder<Book>()
+                .name("bookDetailItemReader")
+                .repository(bookRepository)
+                .methodName("findByDescriptionIsNull")
+                .pageSize(CHUNK_SIZE)
+                .sorts(Map.of("bookId", Sort.Direction.ASC))
                 .build();
     }
 }

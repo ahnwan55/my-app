@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ecr-updater-sa
+  namespace: bookjjeok
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ecr-updater-role
+  namespace: bookjjeok
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "create", "patch", "update", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ecr-updater-rolebinding
+  namespace: bookjjeok
+subjects:
+- kind: ServiceAccount
+  name: ecr-updater-sa
+  namespace: bookjjeok
+roleRef:
+  kind: Role
+  name: ecr-updater-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ecr-token-refresh
+  namespace: bookjjeok
+spec:
+  schedule: "0 */10 * * *" # 10시간마다 실행
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: ecr-updater-sa
+          containers:
+          - name: ecr-updater
+            image: amazon/aws-cli:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Downloading kubectl..."
+              curl -sLO https://dl.k8s.io/release/v1.30.0/bin/linux/amd64/kubectl
+              chmod +x ./kubectl
+              
+              echo "Fetching ECR token..."
+              TOKEN=$(aws ecr get-login-password --region ap-northeast-2)
+              
+              echo "Updating Kubernetes Secret..."
+              ./kubectl create secret docker-registry ecr-secret \
+                --docker-server=558231431060.dkr.ecr.ap-northeast-2.amazonaws.com \
+                --docker-username=AWS \
+                --docker-password=$TOKEN \
+                --dry-run=client -o yaml | ./kubectl apply -f -
+                
+              echo "ECR token successfully refreshed!"
+          restartPolicy: Never

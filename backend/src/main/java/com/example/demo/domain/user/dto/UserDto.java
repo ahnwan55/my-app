@@ -17,10 +17,6 @@ public class UserDto {
         private String ageGroup;
     }
 
-    /**
-     * 마이페이지 도서관 등록 요청
-     * PATCH /api/users/me/libraries
-     */
     @Getter
     public static class LibraryRequest {
         private String mainLibraryCode;
@@ -36,10 +32,16 @@ public class UserDto {
         private String gender;
         private String ageGroup;
         private String mainLibraryCode;
+        private String mainLibraryName;  // 추가 — 도서관 이름
         private String subLibraryCode;
+        private String subLibraryName;   // 추가 — 도서관 이름
         private String createdAt;
 
-        public static MeResponse of(User user) {
+        /**
+         * User 엔티티 + 도서관 이름 2개를 받아서 DTO 생성
+         * LibraryRepository로 조회한 이름을 서비스에서 주입한다.
+         */
+        public static MeResponse of(User user, String mainLibraryName, String subLibraryName) {
             return MeResponse.builder()
                     .userId(user.getUserId())
                     .nickname(user.getNickname())
@@ -47,7 +49,9 @@ public class UserDto {
                     .gender(user.getGender())
                     .ageGroup(user.getAgeGroup())
                     .mainLibraryCode(user.getMainLibraryCode())
+                    .mainLibraryName(mainLibraryName)
                     .subLibraryCode(user.getSubLibraryCode())
+                    .subLibraryName(subLibraryName)
                     .createdAt(user.getCreatedAt() != null
                             ? user.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
                             : null)

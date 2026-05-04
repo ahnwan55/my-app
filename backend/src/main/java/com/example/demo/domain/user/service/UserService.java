@@ -2,6 +2,7 @@ package com.example.demo.domain.user.service;
 
 import com.example.demo.auth.entity.User;
 import com.example.demo.auth.repository.UserRepository;
+import com.example.demo.domain.library.repository.LibraryRepository;
 import com.example.demo.domain.persona.entity.PersonaType;
 import com.example.demo.domain.survey.entity.PersonaAnalysis;
 import com.example.demo.domain.survey.repository.PersonaAnalysisRepository;
@@ -19,16 +20,32 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PersonaAnalysisRepository personaAnalysisRepository;
+    private final LibraryRepository libraryRepository;
 
     @Transactional
     public void saveUserInfo(Long userId, UserDto.UserInfoRequest request) {
-        User user = findUserOrThrow(userId);
-        user.updateUserInfo(request.getNickname(), request.getGender(), request.getAgeGroup());
+        findUserOrThrow(userId).updateUserInfo(
+                request.getNickname(), request.getGender(), request.getAgeGroup());
     }
 
     @Transactional(readOnly = true)
     public UserDto.MeResponse getMe(Long userId) {
-        return UserDto.MeResponse.of(findUserOrThrow(userId));
+        User user = findUserOrThrow(userId);
+
+        // 저장된 도서관 코드로 이름을 조회한다. 코드가 없거나 DB에 없으면 null 반환.
+        String mainName = user.getMainLibraryCode() != null
+                ? libraryRepository.findById(user.getMainLibraryCode())
+                        .map(lib -> lib.getName())
+                        .orElse(user.getMainLibraryCode())  // 이름 없으면 코드 그대로
+                : null;
+
+        String subName = user.getSubLibraryCode() != null
+                ? libraryRepository.findById(user.getSubLibraryCode())
+                        .map(lib -> lib.getName())
+                        .orElse(user.getSubLibraryCode())
+                : null;
+
+        return UserDto.MeResponse.of(user, mainName, subName);
     }
 
     @Transactional(readOnly = true)
@@ -53,8 +70,7 @@ public class UserService {
         if (request.getMainLibraryCode() == null || request.getMainLibraryCode().isBlank()) {
             throw new IllegalArgumentException("메인 도서관 코드는 필수입니다.");
         }
-        User user = findUserOrThrow(userId);
-        user.updateLibraries(
+        findUserOrThrow(userId).updateLibraries(
                 request.getMainLibraryCode(),
                 request.getSubLibraryCode()
         );

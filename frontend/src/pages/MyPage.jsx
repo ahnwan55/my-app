@@ -4,11 +4,12 @@ import { useNavigate } from "react-router-dom";
 /**
  * MyPage.jsx — 마이페이지
  *
- * [도서관 등록 흐름]
- *   1. 슬롯 선택 (메인 / 서브)
- *   2. 도서관 이름 입력 → GET /api/libraries?keyword={keyword} 자동 검색
- *   3. 결과 선택 → 슬롯에 등록
- *   4. 저장하기 → PATCH /api/users/me/libraries
+ * [API 연동]
+ *   GET  /api/users/me                — 프로필 + 도서관 이름 조회
+ *   GET  /api/users/me/persona        — 현재 페르소나 조회
+ *   GET  /api/users/me/analysis-history — 분석 이력 조회
+ *   PATCH /api/users/me/libraries     — 도서관 저장
+ *   POST /api/auth/logout             — 로그아웃
  */
 
 const C = {
@@ -48,25 +49,8 @@ const PERSONA_COLOR = {
   DIVER:     { color: "#4f46e5",   bg: "#e0e7ff"      },
 };
 
-const DUMMY_USER = {
-  nickname:      "시완",
-  profile_image: null,
-  created_at:    "2025-03-01",
-  persona: {
-    code:        "EXPLORER",
-    name:        "지적 탐험가",
-    description: "새로운 지식·개념에 대한 탐구 욕구가 강하며, 다양한 분야를 폭넓게 탐색합니다.",
-  },
-};
-
-const DUMMY_HISTORY = [
-  { analysis_id: 4, code: "EXPLORER",  name: "지적 탐험가", analyzed_at: "2025-04-20" },
-  { analysis_id: 3, code: "ANALYST",   name: "분석가",      analyzed_at: "2025-03-15" },
-  { analysis_id: 2, code: "ANALYST",   name: "분석가",      analyzed_at: "2025-02-28" },
-  { analysis_id: 1, code: "NAVIGATOR", name: "네비게이터",  analyzed_at: "2025-03-01" },
-];
-
 function formatDate(dateStr) {
+  if (!dateStr) return "";
   const d = new Date(dateStr);
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
 }
@@ -75,21 +59,53 @@ export default function MyPage() {
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const user    = DUMMY_USER;
-  const history = DUMMY_HISTORY;
-  const pc      = PERSONA_COLOR[user.persona.code] || PERSONA_COLOR.EXPLORER;
+  const [user,    setUser]    = useState(null);
+  const [persona, setPersona] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ── 도서관 등록 상태 ────────────────────────────────────────
   const [libKeyword,   setLibKeyword]   = useState("");
   const [libResults,   setLibResults]   = useState([]);
   const [libSearching, setLibSearching] = useState(false);
-  const [activeSlot,   setActiveSlot]   = useState(null);   // "main" | "sub" | null
+  const [activeSlot,   setActiveSlot]   = useState(null);
   const [mainLib,      setMainLib]      = useState(null);
   const [subLib,       setSubLib]       = useState(null);
   const [libSaving,    setLibSaving]    = useState(false);
   const [libSaveMsg,   setLibSaveMsg]   = useState("");
 
-  // 500ms 디바운스 검색
+  useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        const [meRes, personaRes, historyRes] = await Promise.all([
+          fetch("/api/users/me",                 { credentials: "include" }),
+          fetch("/api/users/me/persona",          { credentials: "include" }),
+          fetch("/api/users/me/analysis-history", { credentials: "include" }),
+        ]);
+
+        if (meRes.ok) {
+          const me = await meRes.json();
+          setUser(me);
+
+          // 저장된 도서관이 있으면 이름과 함께 슬롯에 미리 채운다.
+          if (me.mainLibraryCode) {
+            setMainLib({ libraryCode: me.mainLibraryCode, name: me.mainLibraryName ?? me.mainLibraryCode });
+          }
+          if (me.subLibraryCode) {
+            setSubLib({ libraryCode: me.subLibraryCode, name: me.subLibraryName ?? me.subLibraryCode });
+          }
+        }
+
+        if (personaRes.ok)  setPersona(await personaRes.json());
+        if (historyRes.ok)  setHistory(await historyRes.json());
+      } catch (e) {
+        console.error("[MyPage] 데이터 로드 실패:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAll();
+  }, []);
+
   useEffect(() => {
     if (!libKeyword.trim()) { setLibResults([]); return; }
 
@@ -144,9 +160,23 @@ export default function MyPage() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } catch {}
     navigate("/login");
   };
+
+  if (loading) {
+    return (
+      <div style={{ ...S.wrap, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={S.spinner} />
+        <style>{`@keyframes spin-cw { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
+      </div>
+    );
+  }
+
+  const pc = PERSONA_COLOR[persona?.code] || PERSONA_COLOR.EXPLORER;
 
   return (
     <div style={S.wrap}>
@@ -167,13 +197,13 @@ export default function MyPage() {
         <div style={S.profileCard}>
           <div style={S.profileCardDeco} aria-hidden="true" />
           <div style={S.profileTop}>
-            {user.profile_image
-              ? <img src={user.profile_image} alt="프로필" style={S.avatar} />
-              : <div style={S.avatarInitial}>{user.nickname.charAt(0)}</div>
+            {user?.profileImage
+              ? <img src={user.profileImage} alt="프로필" style={S.avatar} />
+              : <div style={S.avatarInitial}>{user?.nickname?.charAt(0) ?? "?"}</div>
             }
             <div>
-              <h1 style={S.nickname}>{user.nickname}</h1>
-              <p style={S.joinDate}>가입일 {formatDate(user.created_at)}</p>
+              <h1 style={S.nickname}>{user?.nickname ?? "-"}</h1>
+              <p style={S.joinDate}>가입일 {formatDate(user?.createdAt)}</p>
             </div>
           </div>
           <div style={S.statsRow}>
@@ -184,18 +214,20 @@ export default function MyPage() {
             <div style={S.statDivider} />
             <div style={S.statItem}>
               <span style={S.statValue}>
-                {PERSONA_EMOJI[
-                  Object.entries(
-                    history.reduce((acc, h) => { acc[h.code] = (acc[h.code] || 0) + 1; return acc; }, {})
-                  ).sort((a, b) => b[1] - a[1])[0]?.[0]
-                ] || "🔭"}
+                {history.length > 0
+                  ? PERSONA_EMOJI[Object.entries(
+                      history.reduce((acc, h) => { acc[h.code] = (acc[h.code] || 0) + 1; return acc; }, {})
+                    ).sort((a, b) => b[1] - a[1])[0]?.[0]] ?? "🔭"
+                  : "🔭"}
               </span>
               <span style={S.statLabel}>주요 페르소나</span>
             </div>
             <div style={S.statDivider} />
             <div style={S.statItem}>
               <span style={S.statValue}>
-                {Math.floor((new Date() - new Date(history[0]?.analyzed_at)) / (1000 * 60 * 60 * 24))}일
+                {history.length > 0
+                  ? `${Math.floor((new Date() - new Date(history[0]?.analyzedAt)) / (1000 * 60 * 60 * 24))}일`
+                  : "-"}
               </span>
               <span style={S.statLabel}>마지막 분석</span>
             </div>
@@ -203,24 +235,36 @@ export default function MyPage() {
         </div>
 
         {/* 2. 현재 페르소나 카드 */}
-        <div style={{ ...S.personaCard, background: `linear-gradient(135deg, ${pc.bg}, ${C.purpleLight})`, border: `1.5px solid ${pc.color}20` }}>
-          <div style={S.personaCardHeader}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: pc.color, letterSpacing: "0.1em" }}>현재 페르소나</span>
-            <button onClick={() => navigate("/survey")} style={{ ...S.retakeBtn, color: pc.color, borderColor: `${pc.color}40` }}>
-              재검사 →
-            </button>
-          </div>
-          <div style={S.personaCardBody}>
-            <span style={S.personaEmoji}>{PERSONA_EMOJI[user.persona.code]}</span>
-            <div>
-              <p style={{ fontSize: 11, color: pc.color, fontWeight: 700, margin: "0 0 2px", letterSpacing: "0.08em" }}>
-                {user.persona.code}
-              </p>
-              <h2 style={S.personaName}>{user.persona.name}</h2>
-              <p style={S.personaDesc}>{user.persona.description}</p>
+        {persona ? (
+          <div style={{ ...S.personaCard, background: `linear-gradient(135deg, ${pc.bg}, ${C.purpleLight})`, border: `1.5px solid ${pc.color}20` }}>
+            <div style={S.personaCardHeader}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: pc.color, letterSpacing: "0.1em" }}>현재 페르소나</span>
+              <button onClick={() => navigate("/survey")} style={{ ...S.retakeBtn, color: pc.color, borderColor: `${pc.color}40` }}>
+                재검사 →
+              </button>
+            </div>
+            <div style={S.personaCardBody}>
+              <span style={S.personaEmoji}>{PERSONA_EMOJI[persona.code] ?? "🔭"}</span>
+              <div>
+                <p style={{ fontSize: 11, color: pc.color, fontWeight: 700, margin: "0 0 2px", letterSpacing: "0.08em" }}>
+                  {persona.code}
+                </p>
+                <h2 style={S.personaName}>{persona.name}</h2>
+                <p style={S.personaDesc}>{persona.description}</p>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div style={{ ...S.personaCard, background: C.gray50, border: `1.5px solid ${C.gray200}` }}>
+            <p style={{ fontSize: 13, color: C.gray500, textAlign: "center", margin: "0 0 12px" }}>
+              아직 페르소나 검사를 하지 않았어요.
+            </p>
+            <button style={{ ...S.retakeBtn, color: C.pink, borderColor: C.pink, margin: "0 auto", display: "block" }}
+              onClick={() => navigate("/survey")}>
+              검사 시작 →
+            </button>
+          </div>
+        )}
 
         {/* 3. 도서관 등록 섹션 */}
         <div style={S.libSection}>
@@ -229,8 +273,8 @@ export default function MyPage() {
 
           <div style={S.libSlotList}>
             {[
-              { key: "main", label: "메인 도서관",  value: mainLib, required: true  },
-              { key: "sub",  label: "서브 도서관",   value: subLib,  required: false },
+              { key: "main", label: "메인 도서관", value: mainLib, required: true  },
+              { key: "sub",  label: "서브 도서관", value: subLib,  required: false },
             ].map(({ key, label, value, required }) => (
               <div key={key} style={S.libSlot}>
                 <div style={S.libSlotHeader}>
@@ -238,14 +282,15 @@ export default function MyPage() {
                     {label}{required && <span style={{ color: C.pink }}> *</span>}
                   </span>
                   {value && (
-                    <button style={S.libSlotClear} onClick={() => key === "main" ? setMainLib(null) : setSubLib(null)}>
+                    <button style={S.libSlotClear}
+                      onClick={() => key === "main" ? setMainLib(null) : setSubLib(null)}>
                       ✕
                     </button>
                   )}
                 </div>
-
                 {value ? (
                   <div style={S.libSelected}>
+                    {/* 이름이 있으면 이름, 없으면 코드 표시 */}
                     <span style={S.libSelectedName}>{value.name}</span>
                     <span style={S.libSelectedCode}>{value.libraryCode}</span>
                   </div>
@@ -265,7 +310,6 @@ export default function MyPage() {
             ))}
           </div>
 
-          {/* 검색창 */}
           {activeSlot && (
             <div style={S.libSearchBox}>
               <input
@@ -312,29 +356,38 @@ export default function MyPage() {
         <div style={S.historySection}>
           <p style={S.sectionTitle}>📋 페르소나 분석 이력</p>
           <p style={S.sectionSubtitle}>총 {history.length}회 분석 · 최신순</p>
-          <div style={S.timeline}>
-            {history.map((item, idx) => {
-              const itemPc    = PERSONA_COLOR[item.code] || PERSONA_COLOR.EXPLORER;
-              const isLatest  = idx === 0;
-              const isChanged = idx > 0 && item.code !== history[idx - 1].code;
-              return (
-                <div key={item.analysis_id} style={S.timelineItem}>
-                  {idx < history.length - 1 && <div style={S.timelineLine} />}
-                  <div style={{ ...S.timelineDot, background: isLatest ? `linear-gradient(135deg, ${C.pink}, ${C.purple})` : itemPc.bg, border: `2px solid ${isLatest ? C.pink : itemPc.color}` }}>
-                    <span style={{ fontSize: 12 }}>{PERSONA_EMOJI[item.code]}</span>
-                  </div>
-                  <div style={S.timelineContent}>
-                    <div style={S.timelineTop}>
-                      <span style={{ ...S.timelineBadge, background: itemPc.bg, color: itemPc.color, border: `1px solid ${itemPc.color}30` }}>{item.name}</span>
-                      {isChanged && <span style={S.changedBadge}>페르소나 변화</span>}
-                      {isLatest  && <span style={S.latestBadge}>최신</span>}
+
+          {history.length === 0 ? (
+            <p style={{ fontSize: 13, color: C.gray400, textAlign: "center", padding: "16px 0", margin: 0 }}>
+              아직 분석 이력이 없어요.
+            </p>
+          ) : (
+            <div style={S.timeline}>
+              {history.map((item, idx) => {
+                const itemPc    = PERSONA_COLOR[item.code] || PERSONA_COLOR.EXPLORER;
+                const isLatest  = idx === 0;
+                const isChanged = idx > 0 && item.code !== history[idx - 1].code;
+                return (
+                  <div key={item.analysisId} style={S.timelineItem}>
+                    {idx < history.length - 1 && <div style={S.timelineLine} />}
+                    <div style={{ ...S.timelineDot, background: isLatest ? `linear-gradient(135deg, ${C.pink}, ${C.purple})` : itemPc.bg, border: `2px solid ${isLatest ? C.pink : itemPc.color}` }}>
+                      <span style={{ fontSize: 12 }}>{PERSONA_EMOJI[item.code] ?? "🔭"}</span>
                     </div>
-                    <p style={S.timelineDate}>{formatDate(item.analyzed_at)}</p>
+                    <div style={S.timelineContent}>
+                      <div style={S.timelineTop}>
+                        <span style={{ ...S.timelineBadge, background: itemPc.bg, color: itemPc.color, border: `1px solid ${itemPc.color}30` }}>
+                          {item.name}
+                        </span>
+                        {isChanged && <span style={S.changedBadge}>페르소나 변화</span>}
+                        {isLatest  && <span style={S.latestBadge}>최신</span>}
+                      </div>
+                      <p style={S.timelineDate}>{formatDate(item.analyzedAt)}</p>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* 5. 로그아웃 */}
@@ -351,6 +404,7 @@ export default function MyPage() {
         )}
 
       </div>
+      <style>{`@keyframes spin-cw { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
     </div>
   );
 }
@@ -429,4 +483,6 @@ const S = {
   logoutConfirmBtns: { display: "flex", gap: 10 },
   cancelBtn:  { flex: 1, padding: "12px 0", borderRadius: 14, border: `1px solid ${C.gray200}`, background: C.white, color: C.gray500, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" },
   confirmBtn: { flex: 1, padding: "12px 0", borderRadius: 14, border: "none", background: C.red, color: C.white, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" },
+
+  spinner: { width: 40, height: 40, borderRadius: "50%", border: "3px solid #fce7f3", borderTopColor: "#f472b6", animation: "spin-cw 1s linear infinite", margin: "0 auto" },
 };

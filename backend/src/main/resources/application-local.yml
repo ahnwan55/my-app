@@ -24,6 +24,13 @@ spring:
     init:
       mode: never
 
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            redirect-uri: "http://localhost/login/oauth2/code/kakao"
+
 ai-server:
   url: http://localhost:8000
 

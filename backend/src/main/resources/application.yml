@@ -80,6 +80,9 @@ management:
       prometheus:
         enabled: true
 
+kakao:
+  rest-api-key: ${KAKAO_REST_API_KEY}
+
 otel:
   exporter:
     otlp:

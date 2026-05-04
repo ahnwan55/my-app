@@ -1,39 +1,64 @@
-# My-App Project Specification
+# Bookjjeok (북적북적) Project Specification
 
 ## 1. Project Overview
-이 프로젝트는 공공 도서관 데이터(정보나루 API)를 활용하여 도서 정보를 제공하고, 텍스트 임베딩, 벡터 검색 및 생성형 AI를 사용하여 도서 추천 및 질의응답과 같은 AI 기반 기능을 제공하는 풀스택 모노레포 웹 애플리케이션입니다.
+"북적북적(Bookjjeok)"은 공공 도서관 데이터(정보나루 API)와 카카오 도서 검색 API를 결합하고, SRoBERTa 텍스트 임베딩, pgvector 유사도 검색, AWS Bedrock(Claude) 생성형 AI를 활용하여 독서 성향을 12가지 서브 페르소나로 분류하고 맞춤형 도서를 추천해주는 풀스택 AI 웹 애플리케이션입니다.
 
 ## 2. Architecture & Infrastructure
-- **Deployment & Orchestration**: Docker Compose (`docker-compose.yml`)
-- **Database**: PostgreSQL (벡터 저장 및 유사도 검색을 위한 `pgvector` 확장 포함, DB명: `library_db`)
-- **Web Server / Reverse Proxy**: Nginx (프론트엔드 정적 파일 서빙 및 백엔드 API 라우팅)
+- **Containerization**: Docker (멀티 스테이지 빌드) 및 Docker Compose (`docker-compose.yml` - 로컬 개발용)
+- **Deployment & Orchestration**: Kubernetes (EKS) 기반 배포 (`/k8s` 디렉토리의 Deployment, Service, ConfigMap 매니페스트)
+- **Secret Management**: External-Secrets 연동을 통한 AWS Secrets Manager 활용 (`backend-external-secret.yaml`)
+- **CI/CD Pipeline**: GitHub Actions (`.github/workflows/`)
+  - 백엔드 & AI 서버: ECR 이미지 빌드 및 푸시, K8s 매니페스트 태그 업데이트
+  - 프론트엔드: S3 정적 호스팅 및 CloudFront 캐시 무효화
+- **Web Server / Reverse Proxy**: Nginx (React SPA 서빙 및 `/api`, `/oauth2`, `/login` 백엔드 라우팅)
+- **Database**: PostgreSQL 15 (`pgvector` 확장 포함, 도서 텍스트의 768차원 임베딩 벡터 저장 및 거리 계산 지원)
 
 ## 3. Backend (`/backend`)
-비즈니스 로직, 인증, 외부 API 연동 및 AI 서버와의 통신을 담당하는 메인 API 서버입니다.
-- **Language / Framework**: Java 21, Spring Boot 3.4.4
-- **Core Libraries**: Spring Web, Spring Data JPA, QueryDSL, Spring Security, Spring Batch
-- **Database Access**: PostgreSQL (JPA & QueryDSL 활용), H2 (로컬 테스트용)
-- **Authentication**: Kakao OAuth2 Client, JWT (JSON Web Tokens)
-- **AI Integration**: AWS Bedrock SDK (`software.amazon.awssdk:bedrockruntime`) - 생성형 AI 기능 활용
-- **External API Integration**: 
-  - `jackson-dataformat-xml`: 전국 도서관 정보나루 API 등의 XML 응답 데이터 파싱
-  - Spring WebFlux (WebClient): 비동기 외부 API 호출
-- **API Documentation**: Swagger (`springdoc-openapi-starter-webmvc-ui`)
+비즈니스 로직, 인증, 데이터 파이프라인(Spring Batch) 및 AI 서버 통신을 담당하는 메인 API 서버.
+- **Language / Framework**: Java 21, Spring Boot 3.4.4, Gradle 8.7
+- **Core Libraries**: Spring Web, Spring Data JPA, QueryDSL 5, Spring Batch, Spring Security
+- **Authentication**: Kakao OAuth2 Client (`/oauth2/authorization/kakao`), JWT (HttpOnly 쿠키 방식 아님, Authorization 헤더 기반)
+- **AI Integration**:
+  - `software.amazon.awssdk:bedrockruntime` (버전 2.25.11): Claude 모델에 프롬프트를 전송하여 12종의 서브 페르소나 분석 결과(JSON) 파싱 및 추천 도서 코멘트 생성
+  - `AiServerClient` (WebClient): 내부 AI 서버(FastAPI)의 `/embed`, `/embed/batch` 엔드포인트를 호출하여 벡터값 반환
+- **External API Integration**:
+  - **카카오 도서 검색 API**: 도서 기본 정보(제목, 저자, ISBN-13, 표지 등) 검색
+  - **정보나루 API**: `jackson-dataformat-xml`을 사용하여 이달의 인기 대출 도서, 도서관별 장서/대출 현황 데이터 수집
+- **Batch Processing**: `Spring Batch`와 `LibraryScheduler`를 통해 월간 인기 도서 업데이트 및 도서관 장서 데이터 정기 동기화 수행
+- **Monitoring**: Spring Actuator와 `micrometer-registry-prometheus`를 통한 메트릭 노출
 
 ## 4. Frontend (`/frontend`)
-사용자에게 보여지는 웹 인터페이스(SPA)입니다.
-- **Core Libraries**: React 19.2, Vite
-- **Routing**: `react-router-dom`
-- **Data Visualization**: `recharts` (도서 관련 통계, 대출 현황 등의 그래프 시각화)
-- **Styling**: Tailwind CSS (루트 디렉토리의 `tailwind.config.js` 및 PostCSS 사용)
+사용자에게 보여지는 웹 인터페이스(SPA).
+- **Core Libraries**: React 19.2, Vite 8
+- **Routing**: `react-router-dom` 7 (인증/프로필 유무에 따른 Protected 라우팅 처리 로직 존재 - `App.jsx`)
+- **Data Visualization**: `recharts` 3 (독서 페르소나 6대 지표 레이더 차트, 대출 통계 등 시각화)
+- **Styling**: `index.css`를 통한 Vanilla CSS 및 CSS 변수 기반 디자인 시스템 (벚꽃 핑크 × 퍼플 컬러 테마 적용). (Tailwind는 설정만 되어있고 주로 Vanilla CSS 활용)
+- **Key Pages**: `SurveyPage`(설문), `PersonaResultPage`(페르소나 판별 결과), `BookResultPage`(추천 도서 목록), `InventoryPage`(도서관 장서/대출 현황) 등 13개의 독립된 페이지 컴포넌트 구조.
 
 ## 5. AI Server (`/ai-server`)
-도서 정보 텍스트를 벡터로 변환하는 임베딩 전용 파이썬 기반 서버입니다.
-- **Language / Framework**: Python, FastAPI
-- **Embeddings**: SRoBERTa (Sentence-RoBERTa) 모델(`jhgan/ko-sroberta-multitask`)을 활용하여 텍스트(책 줄거리, 리뷰 등)를 768차원 벡터로 변환합니다. 변환된 벡터는 백엔드를 거쳐 PostgreSQL(`pgvector`)에 저장되어 유사도 검색에 사용됩니다.
+도서 정보 및 사용자의 텍스트를 벡터로 변환하는 마이크로서비스.
+- **Language / Framework**: Python 3.11, FastAPI, Uvicorn
+- **Embeddings**: Sentence-Transformers 기반 `jhgan/ko-sroberta-multitask` 모델 사용. 입력 텍스트를 768차원 실수 리스트(벡터)로 변환하여 JSON 배열로 반환.
+- **Database Context**: `database.py`에서 SQLAlchemy를 사용해 서버 시작 시 DB 접속 후 `CREATE EXTENSION IF NOT EXISTS vector`를 실행해 pgvector를 초기화함.
 
-## 6. Key Workflows (Inferred)
-1. **인증 과정**: 사용자가 카카오 로그인을 통해 인증하면, 백엔드에서 JWT를 발급하여 이후 API 요청에 사용합니다.
-2. **도서 데이터 수집**: 백엔드에서 "정보나루" API를 호출하여 도서 및 대출 관련 XML 데이터를 수집하고 파싱합니다.
-3. **AI 임베딩 파이프라인**: 도서 정보나 텍스트 데이터가 AI 서버로 전달되어 SRoBERTa를 통해 벡터화되고, 이는 PostgreSQL의 `pgvector` 컬럼에 저장됩니다.
-4. **AI 기반 추천/검색**: 사용자가 설문을 완료하거나 도서를 검색하면, PostgreSQL의 `pgvector`를 통한 벡터 유사도 검색으로 의미적으로 연관된 도서를 1차 추천합니다. 이후 백엔드에서 AWS Bedrock(Claude) API를 직접 호출하여 사용자의 페르소나에 맞춘 추천 코멘트를 최종 생성합니다.
+## 6. Key Workflows
+
+### 1. 인증 및 프로필 설정 (Auth Flow)
+- 카카오 소셜 로그인 완료 후 `OAuth2SuccessHandler`에서 JWT 발급
+- 프론트엔드 라우팅에서 `/api/users/me` 호출 후 최초 로그인 사용자(성별 데이터 등 누락)는 강제로 `/user-info` 페이지로 이동시켜 프로필을 완성함.
+
+### 2. 독서 페르소나 분석 파이프라인
+1. 사용자가 12가지 항목의 독서 성향 설문(`SurveyPage`) 완료
+2. 백엔드에서 답변 내용을 모아 프롬프트를 구성하여 AWS Bedrock Claude API 호출
+3. Claude는 답변을 분석해 12개의 지정된 서브 페르소나(EXPLORER 계열, CURATOR 계열 등) 중 하나를 선택하고, 6개 핵심 지표 점수를 JSON으로 반환
+4. 백엔드는 이를 파싱하여 `PersonaAnalysis` 엔티티로 DB에 저장 및 프론트엔드로 전달 (`Recharts`를 통해 시각화)
+
+### 3. AI 기반 의미론적 도서 추천 파이프라인
+1. 사용자의 설문 데이터(또는 페르소나 핵심 키워드)를 백엔드에서 AI 서버(`/embed`)로 전송하여 768차원 기준 벡터값 획득
+2. PostgreSQL에서 `pgvector` 코사인 거리 연산 등 유사도 검색 쿼리(`BookVectorRepository`)를 수행하여 가장 가까운 도서 목록 추출
+3. 추출된 도서 목록과 사용자의 페르소나 이름을 묶어 다시 AWS Bedrock Claude에 전달, 사용자 맞춤형 추천 이유(코멘트) 생성
+4. 프론트엔드는 도서 목록과 AI 코멘트를 렌더링 (`BookResultPage`)
+
+### 4. 도서관 데이터 배치 동기화
+1. Spring Batch(`BookSyncJobConfig`)를 활용하여 대량의 정보나루 API 데이터를 읽고 씀
+2. 월간 인기 대출 도서, 도서 상세 데이터, 도서관 장서 목록을 일정 주기로 동기화하여 `Library` 및 `BookHolding` 테이블 최신화

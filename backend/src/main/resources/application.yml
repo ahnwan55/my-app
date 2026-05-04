@@ -71,3 +71,6 @@ management:
     export:
       prometheus:
         enabled: true
+
+kakao:
+  rest-api-key: ${KAKAO_REST_API_KEY}

@@ -86,5 +86,7 @@ kakao:
 otel:
   exporter:
     otlp:
-      endpoint: http://10.2.0.225:4317
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}
       protocol: grpc
+  sdk:
+    disabled: ${OTEL_SDK_DISABLED:true}

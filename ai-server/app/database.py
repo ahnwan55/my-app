@@ -9,15 +9,36 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_URL = os.getenv("DB_URL") # e.g. jdbc:postgresql://host:5432/bookjjeok
 
 if DB_USER and DB_PASSWORD and DB_URL:
-    db_url_clean = DB_URL.replace("jdbc:", "")
-    # psycopg2는 'ssl=true' 옵션 미지원 → 'sslmode=require'로 교체
-    db_url_clean = db_url_clean.replace("ssl=true", "sslmode=require")
-    db_url_clean = db_url_clean.replace("ssl=True", "sslmode=require")
-    # 'ssl=' 파라미터가 남아있으면 제거
-    import re
-    db_url_clean = re.sub(r'[?&]ssl=[^&]*', lambda m: '' if m.group().startswith('?') else '', db_url_clean)
-    parts = db_url_clean.split("://")
-    DATABASE_URL = f"{parts[0]}://{DB_USER}:{DB_PASSWORD}@{parts[1]}"
+    from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
+    
+    # jdbc: 접두어 제거
+    clean_url = DB_URL.replace("jdbc:", "")
+    parsed = urlparse(clean_url)
+    
+    # 쿼리 파라미터 파싱 및 변환
+    params = dict(parse_qsl(parsed.query))
+    
+    # psycopg2는 'ssl=true' 대신 'sslmode'를 사용함
+    if 'ssl' in params:
+        ssl_val = params.pop('ssl').lower()
+        if ssl_val == 'true':
+            params['sslmode'] = 'require'
+    
+    # 다시 쿼리 스트링으로 조립
+    new_query = urlencode(params)
+    
+    # 사용자 정보 추가하여 새 URL 생성
+    # parsed.netloc 에는 host:port 가 들어있음
+    new_netloc = f"{DB_USER}:{DB_PASSWORD}@{parsed.netloc}"
+    
+    DATABASE_URL = urlunparse((
+        parsed.scheme,
+        new_netloc,
+        parsed.path,
+        parsed.params,
+        new_query,
+        parsed.fragment
+    ))
 else:
     DATABASE_URL = os.getenv(
         "DATABASE_URL",

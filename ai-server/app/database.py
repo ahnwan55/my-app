@@ -10,6 +10,12 @@ DB_URL = os.getenv("DB_URL") # e.g. jdbc:postgresql://host:5432/bookjjeok
 
 if DB_USER and DB_PASSWORD and DB_URL:
     db_url_clean = DB_URL.replace("jdbc:", "")
+    # psycopg2는 'ssl=true' 옵션 미지원 → 'sslmode=require'로 교체
+    db_url_clean = db_url_clean.replace("ssl=true", "sslmode=require")
+    db_url_clean = db_url_clean.replace("ssl=True", "sslmode=require")
+    # 'ssl=' 파라미터가 남아있으면 제거
+    import re
+    db_url_clean = re.sub(r'[?&]ssl=[^&]*', lambda m: '' if m.group().startswith('?') else '', db_url_clean)
     parts = db_url_clean.split("://")
     DATABASE_URL = f"{parts[0]}://{DB_USER}:{DB_PASSWORD}@{parts[1]}"
 else:

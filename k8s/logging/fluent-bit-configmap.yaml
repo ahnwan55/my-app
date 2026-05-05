@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: logging
+  labels:
+    k8s-app: fluent-bit
+data:
+  # 메인 설정
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush         1
+        Log_Level     info
+        Daemon        off
+        Parsers_File  parsers.conf
+        HTTP_Server   On
+        HTTP_Listen   0.0.0.0
+        HTTP_Port     2020
+
+    @INCLUDE input-kubernetes.conf
+    @INCLUDE filter-kubernetes.conf
+    @INCLUDE filter-route.conf
+    @INCLUDE output-s3.conf
+    @INCLUDE output-opensearch.conf
+
+  # 입력: 쿠버네티스 로그
+  input-kubernetes.conf: |
+    [INPUT]
+        Name              tail
+        Tag               kube.*
+        Path              /var/log/containers/*.log
+        Parser            docker
+        DB                /var/log/flb_kube.db
+        Mem_Buf_Limit     5MB
+        Skip_Long_Lines   On
+        Refresh_Interval  10
+
+  # 필터: 쿠버네티스 메타데이터 추가
+  filter-kubernetes.conf: |
+    [FILTER]
+        Name                kubernetes
+        Match               kube.*
+        Kube_URL            https://kubernetes.default.svc:443
+        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+        Kube_Tag_Prefix     kube.var.log.containers.
+        Merge_Log           On
+        Merge_Log_Key       log_processed
+        Keep_Log            Off
+        Annotations         Off
+        Labels              On
+
+  # 필터: 로그 분류 (성공 vs 실패)
+  filter-route.conf: |
+    # 1. 에러 로그 태깅 (ERROR, WARN, 5xx 포함 시 os.logs 태그)
+    [FILTER]
+        Name          rewrite_tag
+        Match         kube.*
+        Rule          $log "(ERROR|WARN|FATAL|HTTP/1.1 5[0-9][0-9])"  os.logs  false
+        Emitter_Name  re_emitted_error
+
+    # 2. 나머지는 모두 s3.logs 태그 (성공 로그)
+    [FILTER]
+        Name          rewrite_tag
+        Match         kube.*
+        Rule          $log "^.*$"  s3.logs  false
+        Emitter_Name  re_emitted_info
+
+  # 출력: OpenSearch (실패 로그용)
+  output-opensearch.conf: |
+    [OUTPUT]
+        Name            es
+        Match           os.logs
+        Host            vpc-bookjjeok-cloud-error-logs-l4d26neidxvfrnvdjguex7ue5a.ap-northeast-2.es.amazonaws.com
+        Port            443
+        TLS             On
+        Index           error-logs-%Y.%m.%d
+        Type            _doc
+        AWS_Auth        On
+        AWS_Region      ap-northeast-2
+        Suppress_Type_Name On
+        # 만약 오픈서치 대시보드 로그인이 필요하다면 아래 설정 사용
+        # HTTP_User     <USER>
+        # HTTP_Pass     <PASSWORD>
+
+  # 출력: S3 (성공 로그용)
+  output-s3.conf: |
+    [OUTPUT]
+        Name                  s3
+        Match                 s3.logs
+        bucket                bookjjeok-cloud-logs-s3
+        region                ap-northeast-2
+        store_as              gzip
+        total_file_size       50M
+        upload_timeout        1m
+        use_put_object        On
+        s3_key_format         /success-logs/%Y/%m/%d/$TAG-%H-%M-%S
+        s3_key_format_tag_delimiters .
+
+  # 파서 설정
+  parsers.conf: |
+    [PARSER]
+        Name        docker
+        Format      json
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep   On

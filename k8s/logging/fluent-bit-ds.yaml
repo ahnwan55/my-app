@@ -39,11 +39,7 @@ spec:
         k8s-app: fluent-bit
     spec:
       serviceAccountName: fluent-bit-sa
-      tolerations:
-      - operator: "Exists"
-        effect: "NoExecute"
-      - operator: "Exists"
-        effect: "NoSchedule"
+      # tolerations 설정을 제거하여 워커 노드에만 배포되도록 합니다.
       containers:
       - name: fluent-bit
         image: fluent/fluent-bit:3.0.4

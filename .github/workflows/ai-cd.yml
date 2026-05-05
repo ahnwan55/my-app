@@ -8,6 +8,9 @@ on:
     paths:
       - 'ai-server/**'
 
+permissions:
+  contents: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

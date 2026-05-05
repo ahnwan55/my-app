@@ -23,6 +23,12 @@ if DB_USER and DB_PASSWORD and DB_URL:
         ssl_val = params.pop('ssl').lower()
         if ssl_val == 'true':
             params['sslmode'] = 'require'
+
+    # Java 전용 옵션인 sslfactory 및 기타 불필요한 파라미터 제거
+    unsupported_params = ['sslfactory', 'targetServerType', 'sslMode', 'currentSchema']
+    for p in unsupported_params:
+        if p in params:
+            params.pop(p)
     
     # 다시 쿼리 스트링으로 조립
     new_query = urlencode(params)

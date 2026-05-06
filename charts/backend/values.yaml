@@ -30,6 +30,8 @@ config:
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://10.2.0.225:4317"
   OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
   OTEL_SERVICE_NAME: "backend"
+  OTEL_LOGS_EXPORTER: "none"
+  OTEL_METRICS_EXPORTER: "none"
 externalSecrets:
   enabled: true
   refreshInterval: "1h"

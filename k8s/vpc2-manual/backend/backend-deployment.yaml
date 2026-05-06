@@ -59,3 +59,7 @@ spec:
             value: "grpc"
           - name: OTEL_SERVICE_NAME
             value: "backend"
+          - name: OTEL_LOGS_EXPORTER
+            value: "none"
+          - name: OTEL_METRICS_EXPORTER
+            value: "none"

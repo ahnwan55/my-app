@@ -1,0 +1,15 @@
+image:
+  repository: fluent/fluent-bit
+  tag: "3.0.4"
+  pullPolicy: Always
+serviceAccount:
+  name: "fluent-bit-sa"
+  annotations: {}
+config:
+  opensearch:
+    host: "vpc-bookjjeok-cloud-error-logs-l4d26neidxvfrnvdjguex7ue5a.ap-northeast-2.es.amazonaws.com"
+    region: "ap-northeast-2"
+    index: "error-logs"
+  s3:
+    bucket: "bookjjeok-cloud-logs-s3"
+    region: "ap-northeast-2"

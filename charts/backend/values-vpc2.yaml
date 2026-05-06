@@ -1,0 +1,19 @@
+imagePullSecrets:
+  - name: ecr-secret
+service:
+  type: LoadBalancer
+externalSecrets:
+  secretStoreRef:
+    name: "aws-secretsmanager-vpc2"
+    kind: "SecretStore"
+  secretKey: "bookjjeok/vpc2/backend"
+secretStore:
+  enabled: true
+  name: aws-secretsmanager-vpc2
+  namespace: bookjjeok
+  region: ap-northeast-2
+cronjob:
+  enabled: true
+  awsAccountId: "558231431060"
+  region: "ap-northeast-2"
+  schedule: "0 */10 * * *"

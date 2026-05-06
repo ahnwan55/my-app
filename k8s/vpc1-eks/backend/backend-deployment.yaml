@@ -41,6 +41,13 @@ spec:
             port: 8080
           initialDelaySeconds: 180
           periodSeconds: 20
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://10.2.0.225:4317"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+        - name: OTEL_SERVICE_NAME
+          value: "backend"
         envFrom:
         - configMapRef:
             name: backend-config

@@ -2,7 +2,7 @@ replicaCount: 2
 image:
   repository: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_ai
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: "0f7b2f1d15313b3bf6a7d650a14ddacaa6cc7dc1"
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: "ai-server"

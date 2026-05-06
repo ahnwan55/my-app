@@ -30,14 +30,18 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8080
-            initialDelaySeconds: 120
-            periodSeconds: 10
+            initialDelaySeconds: 150
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 5
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: 8080
-            initialDelaySeconds: 180
+            initialDelaySeconds: 200
             periodSeconds: 20
+            timeoutSeconds: 10
+            failureThreshold: 5
           envFrom:
             - configMapRef:
                 name: {{ include "backend.fullname" . }}-config

@@ -1,0 +1,40 @@
+replicaCount: 2
+image:
+  repository: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_be
+  pullPolicy: IfNotPresent
+  tag: "cfb150bf4c4f18512dcc53119e755108027fe9e8"
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: "backend"
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+ingress:
+  enabled: false
+config:
+  SPRING_PROFILES_ACTIVE: "prod"
+  AI_SERVER_URL: "http://ai-server"
+externalSecrets:
+  enabled: true
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: "aws-secretsmanager"
+    kind: "ClusterSecretStore"
+  secretKey: "bookjjeok/test/backend"
+secretStore:
+  enabled: false
+cronjob:
+  enabled: false

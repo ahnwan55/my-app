@@ -27,6 +27,9 @@ ingress:
 config:
   SPRING_PROFILES_ACTIVE: "prod"
   AI_SERVER_URL: "http://ai-server"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://10.2.0.225:4317"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+  OTEL_SERVICE_NAME: "backend"
 externalSecrets:
   enabled: true
   refreshInterval: "1h"

@@ -13,6 +13,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -27,43 +32,46 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // JWT + 쿠키 기반이므로 CSRF 비활성화
-            .csrf(csrf -> csrf.disable())
-
-            // JWT 사용으로 세션 불필요
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-            // 요청별 인가 규칙
-            .authorizeHttpRequests(auth -> auth
-                    // 로그인, 공개 API는 인증 없이 허용
-                    .requestMatchers(
-                            "/actuator/**",
-                            "/api/auth/**",
-                            "/login/**",
-                            "/oauth2/**",
-                            "/api/books/**",
-                            "/api/inventory"
-                    ).permitAll()
-                // 나머지는 인증 필요
-                .anyRequest().authenticated()
-            )
-
-            // OAuth2 로그인 설정
-            .oauth2Login(oauth2 -> oauth2
-                // 카카오 유저 정보 처리 서비스 등록
-                .userInfoEndpoint(userInfo ->
-                    userInfo.userService(customOAuth2UserService))
-                // 로그인 성공 시 JWT 발급 핸들러 등록
-                .successHandler(oAuth2SuccessHandler)
-            )
-
-            // JWT 검증 필터를 UsernamePasswordAuthenticationFilter 앞에 등록
-            .addFilterBefore(
-                new JwtFilter(jwtUtil, authService),
-                UsernamePasswordAuthenticationFilter.class
-            );
-
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/actuator/**",
+                                "/api/auth/**",
+                                "/login/**",
+                                "/oauth2/**",
+                                "/api/books/**",
+                                "/api/inventory"
+                        ).permitAll()
+                        .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo ->
+                                userInfo.userService(customOAuth2UserService))
+                        .successHandler(oAuth2SuccessHandler)
+                )
+                .addFilterBefore(
+                        new JwtFilter(jwtUtil, authService),
+                        UsernamePasswordAuthenticationFilter.class
+                );
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of(
+                "https://bookjjeok.cloud",
+                "https://www.bookjjeok.cloud"
+        ));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }

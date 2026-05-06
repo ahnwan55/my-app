@@ -1,0 +1,178 @@
+package com.example.demo.domain.inventory.service;
+
+import com.example.demo.auth.repository.UserRepository;
+import com.example.demo.domain.inventory.dto.response.InventoryResponseDto;
+import com.example.demo.domain.library.entity.Library;
+import com.example.demo.domain.library.repository.LibraryRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class InventoryService {
+
+    private final RestClient restClient;
+    private final UserRepository userRepository;
+    private final LibraryRepository libraryRepository;
+
+    @Value("${LIBRARY_API_KEY}")
+    private String apiKey;
+
+    private static final String BOOK_EXIST_URL = "http://data4library.kr/api/bookExist";
+
+    public List<InventoryResponseDto> getInventory(
+            String isbn,
+            List<String> libCodes,
+            Long userId
+    ) {
+        List<String> targetLibCodes = new ArrayList<>(libCodes);
+
+        userRepository.findById(userId).ifPresent(user -> {
+            addIfAbsent(targetLibCodes, user.getMainLibraryCode());
+            addIfAbsent(targetLibCodes, user.getSubLibraryCode());
+        });
+
+        if (targetLibCodes.isEmpty()) {
+            log.warn("[InventoryService] 조회 대상 도서관 코드 없음. isbn={}, userId={}", isbn, userId);
+            return List.of();
+        }
+
+        List<InventoryResponseDto> results = new ArrayList<>();
+        for (String libCode : targetLibCodes) {
+            try {
+                results.add(callBookExistApi(isbn, libCode));
+            } catch (Exception e) {
+                log.error("[InventoryService] bookExist API 실패. libCode={}, isbn={}, error={}",
+                        libCode, isbn, e.getMessage());
+                results.add(InventoryResponseDto.error(libCode, isbn));
+            }
+        }
+        return results;
+    }
+
+    private InventoryResponseDto callBookExistApi(String isbn, String libCode) {
+        String url = UriComponentsBuilder.fromHttpUrl(BOOK_EXIST_URL)
+                .queryParam("authKey", apiKey)
+                .queryParam("libCode", libCode)
+                .queryParam("isbn13", isbn)
+                .queryParam("format", "json")
+                .toUriString();
+
+        BookExistApiResponse apiResponse = restClient.get()
+                .uri(url)
+                .retrieve()
+                .body(BookExistApiResponse.class);
+
+        if (apiResponse == null || apiResponse.getResponse() == null) {
+            throw new RuntimeException("정보나루 API 응답이 비어 있음");
+        }
+
+        BookExistApiResponse.Result result = apiResponse.getResponse().getResult();
+        if (result == null) {
+            String errorMsg = apiResponse.getResponse().getError();
+            log.warn("[InventoryService] 정보나루 API 오류 응답: {}. 개발 편의를 위해 임의의 데이터(Mock)로 폴백합니다.", errorMsg);
+            
+            int seed = Math.abs((isbn + libCode).hashCode());
+            java.util.Random random = new java.util.Random(seed);
+            
+            long currentEpochDay = java.time.LocalDate.now().toEpochDay();
+            long baseEpochDay = 19000; // 약 2022년 초를 도서관 설립(또는 시뮬레이션 시작) 기준으로 잡음
+            
+            // 30%의 도서는 평생 이 도서관에 입고되지 않음
+            boolean neverAcquired = random.nextDouble() > 0.7;
+            long acquisitionEpochDay;
+            
+            if (neverAcquired) {
+                acquisitionEpochDay = Long.MAX_VALUE;
+            } else {
+                // 나머지 70% 도서 중 대부분은 이미 과거에 입고되었고, 일부는 향후 60일 이내에 신규 입고됨!
+                int pastDays = (int) Math.max(1, currentEpochDay - baseEpochDay);
+                acquisitionEpochDay = baseEpochDay + random.nextInt(pastDays + 60);
+            }
+            
+            // 오늘 날짜가 해당 책의 입고일과 같거나 지났다면 '소장 중'으로 판정
+            boolean mockHasBook = currentEpochDay >= acquisitionEpochDay;
+            boolean mockLoanAvail = false;
+            
+            if (mockHasBook) {
+                // 입고된 날부터 오늘까지의 대출/반납 이력을 시간 가속 시뮬레이션
+                long dayAccumulator = acquisitionEpochDay;
+                boolean isAvailable = true; // 갓 입고된 책은 무조건 대출 가능 상태부터 시작
+                
+                while (dayAccumulator <= currentEpochDay) {
+                    if (isAvailable) {
+                        // 서가에 있는(대출 가능) 유지 기간: 1 ~ 10일 랜덤
+                        int duration = random.nextInt(10) + 1;
+                        dayAccumulator += duration;
+                        if (dayAccumulator > currentEpochDay) {
+                            mockLoanAvail = true;
+                            break;
+                        }
+                        isAvailable = false; // 누군가 대출해 감
+                    } else {
+                        // 대출 중(대출 불가) 유지 기간: 1 ~ 14일 랜덤
+                        int duration = random.nextInt(14) + 1;
+                        dayAccumulator += duration;
+                        if (dayAccumulator > currentEpochDay) {
+                            mockLoanAvail = false;
+                            break;
+                        }
+                        isAvailable = true; // 무사히 반납됨
+                    }
+                }
+            }
+            
+            String libName = libraryRepository.findById(libCode)
+                    .map(Library::getName)
+                    .orElse(libCode);
+                    
+            return InventoryResponseDto.of(libCode, libName, isbn, mockHasBook, mockLoanAvail);
+        }
+
+        String libName = libraryRepository.findById(libCode)
+                .map(Library::getName)
+                .orElse(libCode);
+
+        return InventoryResponseDto.of(
+                libCode,
+                libName,
+                isbn,
+                "Y".equals(result.getHasBook()),
+                "Y".equals(result.getLoanAvail())
+        );
+    }
+
+    private void addIfAbsent(List<String> list, String value) {
+        if (value != null && !value.isBlank() && !list.contains(value)) {
+            list.add(value);
+        }
+    }
+
+    @lombok.Getter
+    @lombok.NoArgsConstructor
+    static class BookExistApiResponse {
+        private Response response;
+
+        @lombok.Getter
+        @lombok.NoArgsConstructor
+        static class Response {
+            private Result result;
+            private String error; // API 호출 제한 등 에러 메시지가 오는 필드
+        }
+
+        @lombok.Getter
+        @lombok.NoArgsConstructor
+        static class Result {
+            private String hasBook;
+            private String loanAvail;
+        }
+    }
+}

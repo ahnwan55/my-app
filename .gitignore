@@ -79,6 +79,7 @@ terraform/*.tfvars
 .idea/
 *.iml
 ai-server/.idea/
+.vscode/
 
 # ──────────────────────────────
 # OS

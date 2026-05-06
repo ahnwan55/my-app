@@ -11,13 +11,9 @@ import { useEffect, useState } from "react";
  * 내부 이동:
  *  /ranking — 이달의 대출 랭킹
  *  /search  — 도서 검색
+ *  /mypage  — 마이페이지 (우측 상단 버튼)
  *
  * 컬러: 벚꽃 핑크(#f472b6) × 퍼플(#a855f7)
- *
- * 변경 사항:
- *  - 이달의 인기도서 TOP 5 섹션 추가 및 GET /api/books/ranking 연동
- *  - 페르소나 검사 순서 안내 섹션 제거
- *  - 타이틀 폰트 Noto Sans KR로 변경
  */
 
 const C = {
@@ -77,6 +73,15 @@ export default function MainPage({ onStart }) {
           <div style={{ ...styles.blob, top: -96, right: -96, background: "#fbcfe8" }} />
           <div style={{ ...styles.blob, bottom: -96, left: -96, background: "#e9d5ff" }} />
         </div>
+
+        {/* ── 우측 상단 마이페이지 버튼 ── */}
+        <button
+          style={styles.myPageBtn}
+          onClick={() => navigate("/mypage")}
+          aria-label="마이페이지"
+        >
+          👤
+        </button>
 
         <div style={styles.inner}>
 
@@ -176,6 +181,28 @@ const styles = {
   },
   bgDecor: { position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0 },
   blob:    { position: "absolute", width: 384, height: 384, borderRadius: "50%", opacity: 0.2, filter: "blur(60px)" },
+
+  // 우측 상단 마이페이지 버튼
+  // position: fixed로 스크롤해도 항상 우측 상단에 고정된다.
+  myPageBtn: {
+    position: "fixed",
+    top: 16,
+    right: 16,
+    zIndex: 10,
+    width: 44,
+    height: 44,
+    borderRadius: "50%",
+    border: `1.5px solid ${C.pinkLight}`,
+    background: "rgba(255,255,255,0.85)",
+    backdropFilter: "blur(8px)",
+    fontSize: 20,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 2px 8px rgba(244,114,182,0.15)",
+  },
+
   inner: {
     position: "relative", zIndex: 1,
     maxWidth: 480, margin: "0 auto",

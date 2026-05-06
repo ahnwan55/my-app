@@ -83,12 +83,11 @@ management:
 kakao:
   rest-api-key: ${KAKAO_REST_API_KEY}
 
-#otel:
-#  exporter:
-#    otlp:
-#      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}
-#      protocol: grpc
-#  sdk:
-#    disabled: ${OTEL_SDK_DISABLED:true}
-# trigger build
-# test cd
+otel:
+  exporter:
+    otlp:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}
+      protocol: grpc
+  sdk:
+    disabled: ${OTEL_SDK_DISABLED:true}
+

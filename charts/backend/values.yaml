@@ -2,7 +2,7 @@ replicaCount: 2
 image:
   repository: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_be
   pullPolicy: IfNotPresent
-  tag: "684aa704649567f5bfc062c0c82d6b95930e7d56"
+  tag: "9271c060bc3f143bcbdb62412d752a648c6e6014"
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: "backend"

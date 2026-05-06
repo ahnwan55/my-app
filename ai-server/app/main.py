@@ -26,6 +26,8 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+Instrumentator().instrument(app).expose(app)
+
 app.include_router(router)
 
 # Prometheus FastAPI Instrumentator 설정

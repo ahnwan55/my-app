@@ -31,16 +31,14 @@ spec:
             cpu: 1000m
             memory: 2Gi
         readinessProbe:
-          httpGet:
-            path: /
+          tcpSocket:
             port: 8000
-          initialDelaySeconds: 120
+          initialDelaySeconds: 60
           periodSeconds: 15
-          timeoutSeconds: 10
+          timeoutSeconds: 5
         livenessProbe:
-          httpGet:
-            path: /
+          tcpSocket:
             port: 8000
-          initialDelaySeconds: 180
+          initialDelaySeconds: 90
           periodSeconds: 20
-          timeoutSeconds: 10
+          timeoutSeconds: 5

@@ -23,6 +23,22 @@ spec:
         envFrom:
         - secretRef:
             name: backend-secrets
+        env:
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: password
+        - name: DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: url
         resources:
           requests:
             cpu: 200m

@@ -33,14 +33,18 @@ spec:
           httpGet:
             path: /actuator/health
             port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: 120
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 5
         livenessProbe:
           httpGet:
             path: /actuator/health
             port: 8080
-          initialDelaySeconds: 60
+          initialDelaySeconds: 180
           periodSeconds: 20
+          timeoutSeconds: 10
+          failureThreshold: 5
         env:
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: "http://10.2.0.225:4317"

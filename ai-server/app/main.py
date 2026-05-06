@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.routers import router
 from app.database import check_pgvector
+from prometheus_fastapi_instrumentator import Instrumentator
 
 
 @asynccontextmanager
@@ -24,6 +25,8 @@ app = FastAPI(
     description="SRoBERTa 모델을 사용하여 도서 텍스트를 pgvector 검색용 768차원 벡터로 변환하는 서버입니다.",
     lifespan=lifespan
 )
+
+Instrumentator().instrument(app).expose(app)
 
 app.include_router(router)
 

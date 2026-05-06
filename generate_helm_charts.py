@@ -515,3 +515,232 @@ app: {{ include "ai.name" . }}
 """)
 
 print("All Helm charts generated successfully.")
+
+# ============================
+# Logging Chart
+# ============================
+write_file('charts/logging/Chart.yaml', """
+apiVersion: v2
+name: logging
+description: A Helm chart for Fluent-bit logging
+type: application
+version: 0.1.0
+""")
+
+write_file('charts/logging/values.yaml', """
+image:
+  repository: fluent/fluent-bit
+  tag: "3.0.4"
+  pullPolicy: Always
+serviceAccount:
+  name: "fluent-bit-sa"
+  annotations: {}
+config:
+  opensearch:
+    host: "vpc-bookjjeok-cloud-error-logs-l4d26neidxvfrnvdjguex7ue5a.ap-northeast-2.es.amazonaws.com"
+    region: "ap-northeast-2"
+    index: "error-logs"
+  s3:
+    bucket: "bookjjeok-cloud-logs-s3"
+    region: "ap-northeast-2"
+""")
+
+write_file('charts/logging/templates/setup.yaml', """
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.serviceAccount.name }}
+  annotations:
+    {{- toYaml .Values.serviceAccount.annotations | nindent 4 }}
+""")
+
+write_file('charts/logging/templates/configmap.yaml', """
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "logging.fullname" . }}-config
+  labels:
+    {{- include "logging.labels" . | nindent 4 }}
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush         1
+        Log_Level     info
+        Daemon        off
+        Parsers_File  parsers.conf
+        HTTP_Server   On
+        HTTP_Listen   0.0.0.0
+        HTTP_Port     2020
+
+    @INCLUDE input-kubernetes.conf
+    @INCLUDE filter-kubernetes.conf
+    @INCLUDE filter-route.conf
+    @INCLUDE output-s3.conf
+    @INCLUDE output-opensearch.conf
+
+  input-kubernetes.conf: |
+    [INPUT]
+        Name              tail
+        Tag               kube.*
+        Path              /var/log/containers/*.log
+        Parser            docker
+        DB                /var/log/flb_kube.db
+        Mem_Buf_Limit     5MB
+        Skip_Long_Lines   On
+        Refresh_Interval  10
+
+  filter-kubernetes.conf: |
+    [FILTER]
+        Name                kubernetes
+        Match               kube.*
+        Kube_URL            https://kubernetes.default.svc:443
+        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+        Kube_Tag_Prefix     kube.var.log.containers.
+        Merge_Log           On
+        Merge_Log_Key       log_processed
+        Keep_Log            Off
+        Annotations         Off
+        Labels              On
+
+  filter-route.conf: |
+    [FILTER]
+        Name          rewrite_tag
+        Match         kube.*
+        Rule          $log "(ERROR|WARN|FATAL|HTTP/1.1 5[0-9][0-9])"  os.logs  false
+        Emitter_Name  re_emitted_error
+
+    [FILTER]
+        Name          rewrite_tag
+        Match         kube.*
+        Rule          $log "^.*$"  s3.logs  false
+        Emitter_Name  re_emitted_info
+
+  output-opensearch.conf: |
+    [OUTPUT]
+        Name            es
+        Match           os.logs
+        Host            {{ .Values.config.opensearch.host }}
+        Port            443
+        TLS             On
+        Index           {{ .Values.config.opensearch.index }}-%Y.%m.%d
+        Type            _doc
+        AWS_Auth        On
+        AWS_Region      {{ .Values.config.opensearch.region }}
+        Suppress_Type_Name On
+
+  output-s3.conf: |
+    [OUTPUT]
+        Name                  s3
+        Match                 s3.logs
+        bucket                {{ .Values.config.s3.bucket }}
+        region                {{ .Values.config.s3.region }}
+        compression           gzip
+        total_file_size       50M
+        upload_timeout        1m
+        use_put_object        On
+        s3_key_format         /success-logs/%Y/%m/%d/$TAG-%H-%M-%S
+        s3_key_format_tag_delimiters .
+
+  parsers.conf: |
+    [PARSER]
+        Name        docker
+        Format      json
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep   On
+""")
+
+write_file('charts/logging/templates/daemonset.yaml', """
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "logging.fullname" . }}-read
+rules:
+- apiGroups: [""]
+  resources: ["namespaces", "pods"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "logging.fullname" . }}-read-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "logging.fullname" . }}-read
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "logging.fullname" . }}
+  labels:
+    {{- include "logging.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "logging.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "logging.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+      - name: fluent-bit
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+          - containerPort: 2020
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: fluent-bit-config
+          mountPath: /fluent-bit/etc/
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: fluent-bit-config
+        configMap:
+          name: {{ include "logging.fullname" . }}-config
+""")
+
+write_file('charts/logging/templates/_helpers.tpl', """
+{{- define "logging.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "logging.fullname" -}}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+
+{{- define "logging.labels" -}}
+helm.sh/chart: {{ include "logging.name" . }}-{{ .Chart.Version | replace "+" "_" }}
+{{ include "logging.selectorLabels" . }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{- define "logging.selectorLabels" -}}
+k8s-app: fluent-bit
+{{- end }}
+""")
+
+print("Logging chart generated successfully.")
+

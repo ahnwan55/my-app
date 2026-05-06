@@ -43,6 +43,7 @@ public class SecurityConfig {
                                 "/login/**",
                                 "/oauth2/**",
                                 "/api/books/**",
+                                "/api/libraries/**",
                                 "/api/inventory"
                         ).permitAll()
                         .anyRequest().authenticated()

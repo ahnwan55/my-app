@@ -94,7 +94,9 @@ export default function App() {
         <BrowserRouter>
             <Routes>
                 {/* 인증 — 항상 접근 가능 */}
+                <Route path="/"      element={<LoginPage />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/main"  element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Main /></Protected>} />
 
                 {/*
                   /user-info
@@ -109,7 +111,7 @@ export default function App() {
                 } />
 
                 {/* 보호 라우트 헬퍼 */}
-                <Route path="/"            element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Main /></Protected>} />
+                <Route path="/main"            element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Main /></Protected>} />
                 <Route path="/survey"      element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Survey setSurveyAnswers={setSurveyAnswers} /></Protected>} />
                 <Route path="/loading"     element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Loading surveyAnswers={surveyAnswers} setPersonaCode={setPersonaCode} setPersonaName={setPersonaName} /></Protected>} />
                 <Route path="/result"      element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Result personaCode={personaCode} /></Protected>} />

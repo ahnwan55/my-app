@@ -189,7 +189,7 @@ export default function MyPage() {
 
         {/* 헤더 */}
         <div style={S.headerRow}>
-          <button onClick={() => navigate("/")} style={S.backBtn}>← 홈으로</button>
+          <button onClick={() => navigate("/main")} style={S.backBtn}>← 홈으로</button>
           <p style={S.pageLabel}>마이페이지</p>
         </div>
 

@@ -156,7 +156,7 @@ export default function UserInfoPage({ onComplete }) {
 
       // App.jsx의 needsProfile을 false로 바꾸고 메인으로 이동
       if (onComplete) onComplete();
-      navigate("/");
+      navigate("/main");
     } catch (e) {
       setSubmitError(e.message || "저장 중 오류가 발생했어요. 다시 시도해주세요.");
     } finally {

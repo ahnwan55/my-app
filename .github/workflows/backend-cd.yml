@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -57,17 +59,21 @@ jobs:
 
       - name: Update Kubernetes manifest
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          # Helm 차트의 values.yaml에서 image tag 업데이트
+          # 1. Helm 차트의 values.yaml 업데이트
           sed -i "s|tag: .*|tag: \"$IMAGE_TAG\"|g" charts/backend/values.yaml
           
-          # 변경사항 Git 푸시
+          # 2. 기존 k8s 매니페스트 파일들 업데이트 (모든 backend-deployment.yaml 찾아서 수정)
+          find k8s -name "backend-deployment.yaml" -exec sed -i "s|image: .*be:.*|image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_be:$IMAGE_TAG|g" {} +
+          
+          # 변경사항 Git 푸시 (충돌 방지를 위해 pull --rebase 추가)
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          git add charts/backend/values.yaml
-          git commit -m "chore: update backend image tag to $IMAGE_TAG [skip ci]"
-          git push
+          git add .
+          git commit -m "chore: update backend image tag in all manifests to $IMAGE_TAG [skip ci]" || echo "No changes to commit"
+          git pull --rebase origin ${{ github.ref_name }}
+          git push origin ${{ github.ref_name }}
+
+
   

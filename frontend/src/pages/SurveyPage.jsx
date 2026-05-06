@@ -114,7 +114,7 @@ export default function SurveyPage({ onSubmit }) {
 
   /* ── 이전 질문으로 이동 ── */
   const handlePrev = () => {
-    if (step === 0) { navigate("/"); return; }
+    if (step === 0) { navigate("/main"); return; }
     setFadeIn(false);
     setTimeout(() => {
       setStep((prev) => prev - 1);

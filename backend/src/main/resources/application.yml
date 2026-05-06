@@ -1,3 +1,5 @@
+server:
+  forward-headers-strategy: native
 spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
@@ -31,7 +33,7 @@ spring:
           kakao:
             client-id: ${KAKAO_CLIENT_ID}
             client-secret: ${KAKAO_CLIENT_SECRET}
-            redirect-uri: "{baseUrl}/login/oauth2/code/kakao"
+            redirect-uri: "https://bookjjeok.cloud/login/oauth2/code/kakao"
             authorization-grant-type: authorization_code
             client-authentication-method: client_secret_post
             scope:
@@ -47,7 +49,7 @@ spring:
     job:
       enabled: false
     jdbc:
-      initialize-schema: always
+      initialize-schema: never
 
 jwt:
   secret: ${JWT_SECRET}
@@ -90,3 +92,4 @@ otel:
       protocol: grpc
   sdk:
     disabled: ${OTEL_SDK_DISABLED:true}
+

@@ -41,7 +41,9 @@ const C = {
  * httpOnly 쿠키로 발급하고 http://localhost:3000/ 으로 리다이렉트.
  */
 function handleKakaoLogin() {
-  window.location.href = "http://localhost/oauth2/authorization/kakao";
+  // 현재 접속 중인 도메인(www 여부 등)을 그대로 유지하면서 OAuth2 엔드포인트로 이동
+  const backendUrl = window.location.origin;
+  window.location.href = `${backendUrl}/oauth2/authorization/kakao`;
 }
 
 export default function LoginPage() {

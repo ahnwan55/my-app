@@ -2,7 +2,7 @@ replicaCount: 2
 image:
   repository: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_be
   pullPolicy: IfNotPresent
-  tag: "2626c11735a13850ba0f26ccace5efa35573c2cb"
+  tag: "e394e3e416768130813f16248dc2ffff735608a8"
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: "backend"
@@ -27,6 +27,11 @@ ingress:
 config:
   SPRING_PROFILES_ACTIVE: "prod"
   AI_SERVER_URL: "http://ai-server"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://10.2.0.225:4317"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+  OTEL_SERVICE_NAME: "backend"
+  OTEL_LOGS_EXPORTER: "none"
+  OTEL_METRICS_EXPORTER: "none"
 externalSecrets:
   enabled: true
   refreshInterval: "1h"

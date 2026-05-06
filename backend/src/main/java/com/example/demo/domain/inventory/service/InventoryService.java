@@ -31,8 +31,7 @@ public class InventoryService {
     public List<InventoryResponseDto> getInventory(
             String isbn,
             List<String> libCodes,
-            Long userId
-    ) {
+            Long userId) {
         List<String> targetLibCodes = new ArrayList<>(libCodes);
 
         userRepository.findById(userId).ifPresent(user -> {
@@ -79,17 +78,17 @@ public class InventoryService {
         if (result == null) {
             String errorMsg = apiResponse.getResponse().getError();
             log.warn("[InventoryService] 정보나루 API 오류 응답: {}. 개발 편의를 위해 임의의 데이터(Mock)로 폴백합니다.", errorMsg);
-            
+
             int seed = Math.abs((isbn + libCode).hashCode());
             java.util.Random random = new java.util.Random(seed);
-            
+
             long currentEpochDay = java.time.LocalDate.now().toEpochDay();
             long baseEpochDay = 19000; // 약 2022년 초를 도서관 설립(또는 시뮬레이션 시작) 기준으로 잡음
-            
+
             // 30%의 도서는 평생 이 도서관에 입고되지 않음
             boolean neverAcquired = random.nextDouble() > 0.7;
             long acquisitionEpochDay;
-            
+
             if (neverAcquired) {
                 acquisitionEpochDay = Long.MAX_VALUE;
             } else {
@@ -97,16 +96,16 @@ public class InventoryService {
                 int pastDays = (int) Math.max(1, currentEpochDay - baseEpochDay);
                 acquisitionEpochDay = baseEpochDay + random.nextInt(pastDays + 60);
             }
-            
+
             // 오늘 날짜가 해당 책의 입고일과 같거나 지났다면 '소장 중'으로 판정
             boolean mockHasBook = currentEpochDay >= acquisitionEpochDay;
             boolean mockLoanAvail = false;
-            
+
             if (mockHasBook) {
                 // 입고된 날부터 오늘까지의 대출/반납 이력을 시간 가속 시뮬레이션
                 long dayAccumulator = acquisitionEpochDay;
                 boolean isAvailable = true; // 갓 입고된 책은 무조건 대출 가능 상태부터 시작
-                
+
                 while (dayAccumulator <= currentEpochDay) {
                     if (isAvailable) {
                         // 서가에 있는(대출 가능) 유지 기간: 1 ~ 10일 랜덤
@@ -129,11 +128,11 @@ public class InventoryService {
                     }
                 }
             }
-            
+
             String libName = libraryRepository.findById(libCode)
                     .map(Library::getName)
                     .orElse(libCode);
-                    
+
             return InventoryResponseDto.of(libCode, libName, isbn, mockHasBook, mockLoanAvail);
         }
 
@@ -146,8 +145,7 @@ public class InventoryService {
                 libName,
                 isbn,
                 "Y".equals(result.getHasBook()),
-                "Y".equals(result.getLoanAvail())
-        );
+                "Y".equals(result.getLoanAvail()));
     }
 
     private void addIfAbsent(List<String> list, String value) {

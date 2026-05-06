@@ -1,3 +1,5 @@
+server:
+  forward-headers-strategy: native
 spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}

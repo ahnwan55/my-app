@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.routers import router
 from app.database import check_pgvector
+from prometheus_fastapi_instrumentator import Instrumentator
 
 
 @asynccontextmanager
@@ -26,6 +27,19 @@ app = FastAPI(
 )
 
 app.include_router(router)
+
+# Prometheus FastAPI Instrumentator 설정
+# HTTP 요청에 대한 latency, throughput, error 메트릭 및 Histogram bucket 자동 활성화
+instrumentator = Instrumentator(
+    should_group_status_codes=False,
+    should_ignore_untemplated=True,
+    should_respect_env_var=True,
+    should_instrument_requests_inprogress=True,
+    excluded_handlers=[".*admin.*", "/metrics"],
+    inprogress_name="inprogress",
+    inprogress_labels=True,
+)
+instrumentator.instrument(app).expose(app)
 
 
 @app.get("/health")

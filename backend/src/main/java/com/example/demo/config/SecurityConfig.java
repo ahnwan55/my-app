@@ -66,7 +66,10 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
                 "https://bookjjeok.cloud",
-                "https://www.bookjjeok.cloud"
+                "https://www.bookjjeok.cloud",
+		"http://43.200.135.188",
+		"http://localhost",
+		"http://localhost:3000"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));

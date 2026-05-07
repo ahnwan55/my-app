@@ -10,10 +10,10 @@
 
 | 기능 | 설명 |
 |------|------|
-| **🔐 카카오 소셜 로그인** | OAuth2 + JWT(HttpOnly 쿠키) 기반의 안전한 인증. 최초 로그인 시 프로필(성별 등) 설정 유도 |
+| **🔐 카카오 소셜 로그인** | OAuth2 + JWT(Authorization 헤더) 기반의 안전한 인증. 최초 로그인 시 프로필(성별 등) 설정 유도 |
 | **📋 독서 성향 설문** | 독서 습관·선호에 대한 설문을 통해 데이터 수집 |
 | **🧠 AI 페르소나 분석** | AWS Bedrock Claude가 설문 답변을 분석하여 **12가지 서브 페르소나** 중 하나로 분류하고, 6대 지표 점수(레이더 차트) 제공 |
-| **📖 AI 맞춤형 도서 추천** | 카카오 API 검색 + SRoBERTa 실시간 벡터 임베딩 + 인메모리 유사도 정렬(Re-ranking)로 최적 도서 1차 추천 → Bedrock Claude 코멘트 생성 |
+| **📖 AI 맞춤형 도서 추천** | 카카오 API 검색 + SRoBERTa 실시간 벡터 임베딩 + 인메모리 코사인 유사도 Re-ranking으로 최적 도서 추천 → Bedrock Claude 코멘트 생성 |
 | **🔍 도서 검색** | 카카오 도서 검색 API를 활용한 키워드 기반 도서 검색 |
 | **📊 인기 대출 도서 랭킹** | 정보나루 API 기반 월간 인기 대출 도서 Top N 데이터 시각화 (Recharts) |
 | **📍 도서관 장서·대출 현황** | 서울 지역 공공 도서관별 장서 보유 및 대출 가능 여부 조회 |
@@ -39,7 +39,7 @@
 |------|-----------------|
 | Core | React 19.2, Vite 8 |
 | Routing | react-router-dom 7 |
-| Styling | Vanilla CSS (Noto Sans KR + Playfair Display, 벚꽃 핑크 × 퍼플 디자인 시스템) |
+| Styling | Vanilla CSS (Noto Sans KR, 벚꽃 핑크 × 퍼플 디자인 시스템) |
 | Data Visualization | Recharts 3 |
 | Icons | lucide-react |
 
@@ -49,13 +49,14 @@
 | Core | Java 21, Spring Boot 3.4.4, Gradle 8.7 |
 | Security | Spring Security, OAuth2 Client (카카오), JWT (jjwt 0.12.3) |
 | Data | Spring Data JPA, QueryDSL 5, PostgreSQL + pgvector 0.1.4 |
+| Cache | Spring Data Redis (Redis 7) |
 | Batch | Spring Batch (도서관 데이터 동기화 파이프라인) |
 | AI Integration | AWS Bedrock SDK 2.25.11 (Claude), FastAPI SRoBERTa 클라이언트 |
 | External APIs | 정보나루 API (XML/jackson-dataformat-xml), 카카오 도서 검색 API |
 | HTTP Client | Spring WebFlux (WebClient) |
-| Monitoring | Spring Actuator + Micrometer Prometheus |
-| API Docs | springdoc-openapi (Swagger UI) |
-| Utilities | Lombok, spring-dotenv |
+| Observability | Spring Actuator + Micrometer Prometheus + OpenTelemetry (OTLP Tracing) |
+| API Docs | springdoc-openapi 2.8.6 (Swagger UI) |
+| Utilities | Lombok, spring-dotenv 4.0 |
 
 ### AI Server
 | 항목 | 버전 / 라이브러리 |
@@ -63,6 +64,7 @@
 | Core | Python 3.11, FastAPI, Uvicorn |
 | Embeddings | sentence-transformers (SRoBERTa: `jhgan/ko-sroberta-multitask`, 768차원) |
 | Database | SQLAlchemy 2 + psycopg2-binary (pgvector 익스텐션 관리) |
+| Monitoring | prometheus-fastapi-instrumentator (HTTP 메트릭 노출) |
 
 ### Infrastructure
 | 항목 | 설명 |
@@ -70,9 +72,11 @@
 | Containerization | Docker (멀티 스테이지 빌드) + Docker Compose |
 | Web Server | Nginx (React SPA 서빙 + 백엔드 API 리버스 프록시) |
 | Database | PostgreSQL 15 + pgvector 확장 |
+| Cache | Redis 7 Alpine |
 | CI/CD | GitHub Actions (Backend/AI → ECR, Frontend → S3 + CloudFront) |
-| Orchestration | Kubernetes (EKS) — ExternalSecret + AWS Secrets Manager |
+| Orchestration | Kubernetes (EKS) — Kustomize 다중 환경 관리 + HPA + ExternalSecret |
 | Cloud | AWS (ECR, EKS, S3, CloudFront, Bedrock, Secrets Manager) |
+| Logging | Fluent Bit (DaemonSet) — K8s 컨테이너 로그 수집 |
 
 ---
 
@@ -91,18 +95,18 @@
               ┌───────────▼───────────┐
               │   Spring Boot 백엔드   │
               │  (Java 21, JPA, JWT)  │
-              └───┬───────┬───────┬───┘
-                  │       │       │
-       ┌──────────▼ ┐  ┌──▼────┐  ├──→ 카카오 API
-       │  AI Server │  │ AWS   │  ├──→ 정보나루 API
-       │  (FastAPI) │  │Bedrock│  │
-       │  SRoBERTa  │  │Claude │  │
-       └──────┬─────┘  └───────┘  │
-              │                   │
-       ┌──────▼───────────────────▼┐
-       │    PostgreSQL 15          │
-       │  + pgvector (768차원)     │
-       └───────────────────────────┘
+              └──┬──────┬──────┬──┬───┘
+                 │      │      │  │
+      ┌──────────▼┐  ┌──▼───┐  │  ├──→ 카카오 API
+      │ AI Server │  │ AWS  │  │  └──→ 정보나루 API
+      │ (FastAPI) │  │Bedrk.│  │
+      │ SRoBERTa  │  │Claude│  │
+      └──────┬────┘  └──────┘  │
+             │                 │
+      ┌──────▼─────────────────▼┐    ┌─────────┐
+      │    PostgreSQL 15        │    │  Redis  │
+      │  + pgvector (768차원)    │    │  Cache  │
+      └─────────────────────────┘    └─────────┘
 ```
 
 ---
@@ -127,6 +131,7 @@
   BEDROCK_MODEL_ID=<Bedrock Claude 모델 ID>
   LIBRARY_API_KEY=<정보나루 API 인증키>
   AI_SERVER_URL=http://ai-server:8000
+  REDIS_HOST=redis
   ```
 
 ### 실행 방법
@@ -142,7 +147,8 @@ docker-compose up -d --build
 #    - 프론트엔드: http://localhost
 #    - Swagger UI: http://localhost:8080/swagger-ui.html
 #    - AI Server Health: http://localhost:8000/health
-#    - Prometheus Metrics: http://localhost:8080/actuator/prometheus
+#    - Prometheus Metrics (Backend): http://localhost:8080/actuator/prometheus
+#    - Prometheus Metrics (AI): http://localhost:8000/metrics
 ```
 
 ### 로컬 개발 (Docker 없이)
@@ -155,7 +161,8 @@ cd frontend && npm install && npm run dev
 cd backend && ./gradlew bootRun
 
 # AI Server (포트 8000)
-cd ai-server && pip install -r requirements.txt
+cd ai-server
+pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
@@ -212,21 +219,35 @@ my-app/
 │
 ├── ai-server/               # FastAPI 임베딩 서버
 │   ├── app/
-│   │   ├── main.py          # FastAPI 앱 (lifespan: pgvector 활성화)
+│   │   ├── main.py          # FastAPI 앱 (lifespan: pgvector 활성화, Prometheus 메트릭)
 │   │   ├── routers.py       # /embed, /embed/batch 엔드포인트
 │   │   ├── schemas.py       # Pydantic 요청/응답 모델
 │   │   └── database.py      # SQLAlchemy 엔진 + pgvector 확인
 │   ├── Dockerfile
 │   └── requirements.txt
 │
-├── k8s/                     # Kubernetes 매니페스트
-│   ├── backend-deployment.yaml
-│   ├── backend-service.yaml
-│   ├── backend-configmap.yaml
-│   ├── backend-external-secret.yaml  # ExternalSecret → AWS Secrets Manager
-│   ├── external-secret-store.yaml
-│   ├── ai-deployment.yaml
-│   └── ai-service.yaml
+├── k8s/                     # Kubernetes 매니페스트 (Kustomize 기반)
+│   ├── base/                # 공통 베이스 매니페스트
+│   │   ├── backend-deployment.yaml
+│   │   ├── backend-service.yaml
+│   │   ├── backend-configmap.yaml
+│   │   ├── backend-external-secret.yaml  # ExternalSecret → AWS Secrets Manager
+│   │   ├── backend-hpa.yaml              # HorizontalPodAutoscaler
+│   │   ├── external-secret-store.yaml
+│   │   ├── ai-deployment.yaml
+│   │   ├── ai-service.yaml
+│   │   ├── ai-hpa.yaml                   # HorizontalPodAutoscaler
+│   │   └── kustomization.yaml
+│   ├── vpc1-eks/            # EKS 환경 오버레이 (Ingress 포함)
+│   │   ├── backend/         # backend-service(LoadBalancer), Ingress
+│   │   └── ai/
+│   ├── vpc2-manual/         # 수동 구성 환경 오버레이 (ECR CronJob 포함)
+│   │   ├── backend/         # ECR 자격증명 갱신 CronJob
+│   │   └── ai/
+│   └── logging/             # Fluent Bit 로그 수집 DaemonSet
+│       ├── fluent-bit-configmap.yaml
+│       ├── fluent-bit-ds.yaml
+│       └── setup.yaml
 │
 ├── nginx/
 │   └── nginx.conf           # SPA 서빙 + /api, /oauth2, /login 프록시
@@ -236,6 +257,8 @@ my-app/
 │   ├── ai-cd.yml            # AI Server → ECR + K8s manifest 업데이트
 │   └── frontend-cd.yml      # Frontend → S3 + CloudFront 캐시 무효화
 │
+├── charts/                  # Helm Chart (추가 배포 옵션)
+├── generate_helm_charts.py  # Helm Chart 생성 스크립트
 ├── docker-compose.yml       # 로컬 개발용 전체 서비스 구성
 └── .env                     # Docker Compose용 DB 환경변수
 ```

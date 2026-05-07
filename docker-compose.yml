@@ -54,6 +54,9 @@ services:
       - ./backend/.env
     volumes:
       - ./ai-server/models:/app/models
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   # ── React 프론트엔드 + Nginx ──────────────────────────────────
   frontend:

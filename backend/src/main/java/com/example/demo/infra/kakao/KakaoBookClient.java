@@ -71,6 +71,8 @@ public class KakaoBookClient {
                 .block();
 
         if (response == null) return List.of();
+	log.info("[KakaoBookClient] 응답: {}", response.toString().substring(0, Math.min(200, response.toString().length())));
+
 
         List<BookDto.BookResponse> result = new ArrayList<>();
         JsonNode documents = response.path("documents");

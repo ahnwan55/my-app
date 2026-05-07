@@ -31,23 +31,28 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         Long kakaoId = (Long) oAuth2User.getAttributes().get("id");
         String kakaoIdStr = String.valueOf(kakaoId);
 
+        // Access Token 신규 발급
         String accessToken = jwtUtil.generateAccessToken(kakaoIdStr);
 
+        // Refresh Token은 CustomOAuth2UserService에서 이미 DB에 저장됨
+        // 여기서는 DB에서 꺼내어 쿠키에 담음
         String refreshToken = userRepository.findByKakaoId(kakaoId)
                 .map(user -> user.getRefreshToken())
                 .orElseGet(() -> jwtUtil.generateRefreshToken(kakaoIdStr));
 
+        // Access Token 쿠키 (httpOnly: JS 접근 차단, 30분 유효)
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken)
                 .httpOnly(true)
-                .secure(true)
-                .sameSite("Lax")
+                .secure(false)        // 배포 시 true로 변경
+                .sameSite("Lax")      // 카카오 리다이렉트 허용을 위해 Lax 사용
                 .maxAge(Duration.ofMinutes(30))
                 .path("/")
                 .build();
 
+        // Refresh Token 쿠키 (7일 유효)
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)        // 배포 시 true로 변경
                 .sameSite("Lax")
                 .maxAge(Duration.ofDays(7))
                 .path("/")
@@ -56,6 +61,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-        response.sendRedirect("https://bookjjeok.cloud/main");
+        // 로그인 완료 후 프론트 메인 페이지로 리다이렉트
+        response.sendRedirect("http://43.200.135.188/");
     }
 }

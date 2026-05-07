@@ -97,4 +97,5 @@ Thumbs.db
 # HuggingFace 모델 캐시
 # ──────────────────────────────
 ai-server/.cache/
-~/.cache/huggingface/
+~/.cache/huggingface/*.sql
+*.sql

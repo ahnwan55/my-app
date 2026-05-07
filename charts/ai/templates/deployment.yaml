@@ -26,6 +26,22 @@ spec:
             - name: http
               containerPort: 8000
               protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 100
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
           envFrom:
             - secretRef:
                 name: {{ .Values.envFromSecret }}

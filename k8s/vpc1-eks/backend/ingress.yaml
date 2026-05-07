@@ -6,7 +6,13 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
+    # 80(HTTP)과 443(HTTPS)을 모두 엽니다.
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    # HTTP 요청을 자동으로 HTTPS로 리다이렉트합니다.
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    # TODO: 실제 ACM 인증서 ARN을 아래에 입력해 주세요.
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:558231431060:certificate/66b21233-5746-48c2-883a-c58e6efa1e46
+    alb.ingress.kubernetes.io/group.name: "shared-alb"
     alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
     alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
     alb.ingress.kubernetes.io/success-codes: "200"

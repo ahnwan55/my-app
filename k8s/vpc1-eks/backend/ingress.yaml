@@ -29,3 +29,13 @@ spec:
             name: backend
             port:
               number: 80
+  - host: bookjjeok.cloud
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: backend
+            port:
+              number: 80

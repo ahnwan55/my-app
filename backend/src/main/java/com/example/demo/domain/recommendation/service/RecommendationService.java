@@ -156,19 +156,20 @@ public class RecommendationService {
     // ── 페르소나 → 카카오 검색 키워드 매핑 ──────────────────────────────
 
     private String resolveSearchQuery(PersonaCode personaCode) {
+        // 키워드 1개로 유지 — 카카오 API 검색 결과 최대화
         return switch (personaCode) {
-            case TREND_SURFER        -> "트렌드 교양 과학";
-            case POLYMATH_SEEKER     -> "융합 인문 철학";
-            case AESTHETIC_COLLECTOR -> "에세이 예술 감성";
-            case KNOWLEDGE_EDITOR    -> "지식 큐레이션 인문";
-            case FAST_SOLVER         -> "비즈니스 실용 자기계발";
-            case CAREER_STRATEGIST   -> "경영 리더십 전략";
-            case EMOTIONAL_SYNCHRO   -> "감성 소설 문학";
-            case CASUAL_RESTER       -> "힐링 에세이 단편소설";
-            case COLD_CRITIC         -> "사회과학 비판 논쟁";
-            case SILENT_RESEARCHER   -> "학술 교양 고전";
-            case CONTEMPLATIVE_MONK  -> "철학 사상 명상";
-            case OBSESSIVE_FANDOM    -> "시리즈 소설 판타지";
+            case TREND_SURFER        -> "트렌드";
+            case POLYMATH_SEEKER     -> "인문";
+            case AESTHETIC_COLLECTOR -> "에세이";
+            case KNOWLEDGE_EDITOR    -> "지식";
+            case FAST_SOLVER         -> "자기계발";
+            case CAREER_STRATEGIST   -> "경영";
+            case EMOTIONAL_SYNCHRO   -> "소설";
+            case CASUAL_RESTER       -> "힐링";
+            case COLD_CRITIC         -> "사회과학";
+            case SILENT_RESEARCHER   -> "고전";
+            case CONTEMPLATIVE_MONK  -> "철학";
+            case OBSESSIVE_FANDOM    -> "판타지";
         };
     }
 

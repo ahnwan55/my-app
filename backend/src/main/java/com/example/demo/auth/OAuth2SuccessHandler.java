@@ -5,6 +5,7 @@ import com.example.demo.jwt.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
@@ -15,6 +16,14 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.time.Duration;
 
+/**
+ * OAuth2SuccessHandler - 카카오 로그인 성공 후 처리
+ *
+ * [변경 사항]
+ *   - 리다이렉트 URL을 환경변수(APP_REDIRECT_URL)로 분리
+ *     EC2 환경: http://43.200.135.188/
+ *     K8s 환경: https://bookjjeok.cloud/main
+ */
 @Component
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
@@ -22,11 +31,15 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
 
+    // EC2 기본값: http://43.200.135.188/
+    // K8s 환경에서는 APP_REDIRECT_URL=https://bookjjeok.cloud/main 으로 주입
+    @Value("${app.redirect-url:http://43.200.135.188/}")
+    private String redirectUrl;
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         Long kakaoId = (Long) oAuth2User.getAttributes().get("id");
         String kakaoIdStr = String.valueOf(kakaoId);
@@ -61,7 +74,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-        // 로그인 완료 후 프론트 메인 페이지로 리다이렉트
-        response.sendRedirect("http://43.200.135.188/");
+        // 환경변수로 주입된 URL로 리다이렉트
+        response.sendRedirect(redirectUrl);
     }
 }

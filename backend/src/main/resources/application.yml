@@ -88,3 +88,6 @@ otel:
     otlp:
       endpoint: http://10.2.0.225:4317
       protocol: grpc
+
+app:
+  redirect-url: ${APP_REDIRECT_URL:http://43.200.135.188/}

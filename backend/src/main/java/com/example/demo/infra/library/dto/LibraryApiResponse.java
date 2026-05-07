@@ -60,16 +60,26 @@ public class LibraryApiResponse {
     @NoArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class BookItem {
-        private String bookname;
-        private String authors;
-        private String publisher;
-        private String publicationYear;
-        private String isbn13;
-        private String bookImageURL;
-        private String classNo;
-        private String classNm;
-        private String loanCount;
-        private String ranking;
+    	@JacksonXmlProperty(localName = "bookname")
+    	private String bookname;
+    	@JacksonXmlProperty(localName = "authors")
+    	private String authors;
+    	@JacksonXmlProperty(localName = "publisher")
+    	private String publisher;
+    	@JacksonXmlProperty(localName = "publication_year")
+    	private String publicationYear;
+    	@JacksonXmlProperty(localName = "isbn13")
+    	private String isbn13;
+    	@JacksonXmlProperty(localName = "bookImageURL")
+    	private String bookImageURL;
+    	@JacksonXmlProperty(localName = "class_no")
+    	private String classNo;
+    	@JacksonXmlProperty(localName = "class_nm")
+    	private String classNm;
+    	@JacksonXmlProperty(localName = "loan_count")
+    	private String loanCount;
+    	@JacksonXmlProperty(localName = "ranking")
+    	private String ranking;
     }
 
     // ── 도서 상세 정보 ──────────────────────────────────────────────────

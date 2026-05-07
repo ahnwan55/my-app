@@ -8,18 +8,53 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_URL = os.getenv("DB_URL") # e.g. jdbc:postgresql://host:5432/bookjjeok
 
+from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
+
+def clean_database_url(url: str, user=None, password=None):
+    if not url:
+        return url
+    # jdbc: 접두어 제거
+    clean_url = url.replace("jdbc:", "")
+    parsed = urlparse(clean_url)
+    
+    # 쿼리 파라미터 파싱 및 필터링
+    raw_params = parse_qsl(parsed.query)
+    params = {}
+    for k, v in raw_params:
+        key_lower = k.lower()
+        if key_lower == 'ssl':
+            if v.lower() == 'true':
+                params['sslmode'] = 'require'
+        elif key_lower in ['sslfactory', 'targetservertype', 'sslmode', 'currentschema']:
+            if key_lower == 'sslmode':
+                params['sslmode'] = v
+            continue
+        else:
+            params[k] = v
+
+    new_query = urlencode(params)
+    netloc = parsed.netloc
+    if user and password:
+        # 기존 netloc에 이미 user:pass가 포함되어 있을 수 있으므로 분리 후 재조립
+        host_port = netloc.split('@')[-1]
+        netloc = f"{user}:{password}@{host_port}"
+    
+    return urlunparse((
+        parsed.scheme if parsed.scheme else "postgresql",
+        netloc,
+        parsed.path,
+        parsed.params,
+        new_query,
+        parsed.fragment
+    ))
+
 if DB_USER and DB_PASSWORD and DB_URL:
-    db_url_clean = DB_URL.replace("jdbc:", "")
-    parts = db_url_clean.split("://")
-    DATABASE_URL = f"{parts[0]}://{DB_USER}:{DB_PASSWORD}@{parts[1]}"
+    DATABASE_URL = clean_database_url(DB_URL, DB_USER, DB_PASSWORD)
 else:
-    DATABASE_URL = os.getenv(
-        "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost:5432/bookjjeok"
-    )
+    raw_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/bookjjeok")
+    DATABASE_URL = clean_database_url(raw_url)
 
 # SQLAlchemy 엔진 생성
-# pool_pre_ping: 커넥션 유효성을 쿼리 전에 확인하여 끊긴 커넥션 방지
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 # 세션 팩토리

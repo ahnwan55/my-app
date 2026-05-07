@@ -39,7 +39,7 @@
 |------|-----------------|
 | Core | React 19.2, Vite 8 |
 | Routing | react-router-dom 7 |
-| Styling | Vanilla CSS (Noto Sans KR + Playfair Display, 벚꽃 핑크 × 퍼플 디자인 시스템) |
+| Styling | Vanilla CSS (Noto Sans KR, 벚꽃 핑크 × 퍼플 디자인 시스템) |
 | Data Visualization | Recharts 3 |
 | Icons | lucide-react |
 

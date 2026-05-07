@@ -5,30 +5,14 @@
 
 ## 2. Architecture & Infrastructure
 
-### Containerization & Local Development
+### Containerization & Deployment (EC2)
 - **Docker**: 멀티 스테이지 빌드를 적용하여 각 서비스(backend, ai-server, frontend)를 이미지화
-- **Docker Compose** (`docker-compose.yml`): 로컬 개발 환경에서 5개 서비스를 한 번에 실행
+- **Docker Compose** (`docker-compose.yml`): EC2 서버에서 5개 서비스를 한 번에 구동
   - `postgres` (PostgreSQL 15), `redis` (Redis 7 Alpine), `backend` (Spring Boot :8080), `ai-server` (FastAPI :8000), `frontend` (React + Nginx :80)
-
-### Kubernetes & Deployment
-- **Orchestration**: Kubernetes (EKS) 기반 배포, Kustomize를 활용한 다중 환경 관리
-- **디렉토리 구조** (`/k8s`):
-  - `base/`: 공통 베이스 매니페스트 (Deployment, Service, ConfigMap, HPA, ExternalSecret)
-  - `vpc1-eks/`: EKS 환경 오버레이 — ALB Ingress, LoadBalancer 타입 서비스
-  - `vpc2-manual/`: 수동 구성 환경 오버레이 — ECR 자격증명 갱신 CronJob, NodePort 서비스
-  - `logging/`: Fluent Bit DaemonSet (컨테이너 로그 수집)
-- **Auto Scaling**: HorizontalPodAutoscaler(HPA)를 backend 및 ai-server에 각각 적용
-- **Secret Management**: External-Secrets Operator + AWS Secrets Manager 연동 (`backend-external-secret.yaml`, `external-secret-store.yaml`)
-- **Helm**: `/charts` 디렉토리 및 `generate_helm_charts.py` 스크립트로 Helm Chart 관리 지원
-
-### CI/CD Pipeline
-- **GitHub Actions** (`.github/workflows/`):
-  - `backend-cd.yml`: 백엔드 → ECR 이미지 빌드/푸시, K8s 매니페스트 이미지 태그 업데이트
-  - `ai-cd.yml`: AI 서버 → ECR 이미지 빌드/푸시, K8s 매니페스트 이미지 태그 업데이트
-  - `frontend-cd.yml`: React 빌드 → S3 정적 호스팅 + CloudFront 캐시 무효화
+- **환경 변수**: `backend/.env` 파일로 DB 접속 정보, API 키 등을 주입 (`spring-dotenv` 활용)
 
 ### Web Server / Reverse Proxy
-- **Nginx** (`nginx/nginx.conf`): React SPA 서빙(try_files), `/api`, `/oauth2`, `/login` 경로를 백엔드(:8080)로 프록시
+- **Nginx** (`nginx/nginx.conf`): React SPA 정적 파일 서빙(`try_files`), `/api/`, `/oauth2/`, `/login/` 경로를 EC2 내부 고정 IP(`:8080`)의 Spring Boot 백엔드로 프록시
 
 ### Databases & Cache
 - **PostgreSQL 15**: 주 데이터베이스. `pgvector` 확장으로 도서 텍스트의 768차원 임베딩 벡터 저장 및 코사인 유사도 검색 지원
@@ -54,6 +38,52 @@
   - `micrometer-tracing-bridge-otel` + `opentelemetry-spring-boot-starter`: 분산 추적(OTLP Tracing)
 - **API Docs**: `springdoc-openapi-starter-webmvc-ui` 2.8.6 — Swagger UI (`/swagger-ui.html`)
 
+### 주요 패키지 구조
+```
+backend/src/main/java/com/example/demo/
+├── DemoApplication.java
+├── auth/            # OAuth2 인증 (카카오 로그인 + JWT 발급)
+├── jwt/             # JWT 필터 + 유틸리티
+├── config/          # Security, Bedrock, Redis, RestClient, GlobalExceptionHandler 설정
+├── domain/
+│   ├── book/        # 도서 (엔티티, 벡터, 월간인기, CRUD)
+│   ├── survey/      # 설문 + 페르소나 분석 결과
+│   ├── persona/     # 페르소나 코드/유형 엔티티
+│   ├── recommendation/ # AI 추천 (벡터 검색 + Bedrock 코멘트)
+│   ├── user/        # 사용자 프로필 관리
+│   ├── library/     # 도서관 + 장서 보유 엔티티
+│   └── inventory/   # 장서/대출 현황 조회
+└── infra/
+    ├── ai/          # AiServerClient (임베딩) + BedrockClient (생성AI)
+    ├── kakao/       # KakaoBookClient (도서 검색)
+    └── library/     # LibraryApiClient + Spring Batch 동기화
+```
+- **Config**:
+  - `application.yml` — 공통 설정 (환경변수 바인딩)
+  - `application-local.yml` — 로컬 개발 프로파일
+  - `application-prod.yml` — EC2 운영 프로파일
+
+### 주요 패키지 구조
+```
+backend/src/main/java/com/example/demo/
+├── DemoApplication.java
+├── auth/            # OAuth2 인증 (카카오 로그인 + JWT 발급)
+├── jwt/             # JWT 필터 + 유틸리티
+├── config/          # Security, Bedrock, Redis, RestClient, GlobalExceptionHandler 설정
+├── domain/
+│   ├── book/        # 도서 (엔티티, 벡터, 월간인기, CRUD)
+│   ├── survey/      # 설문 + 페르소나 분석 결과
+│   ├── persona/     # 페르소나 코드/유형 엔티티
+│   ├── recommendation/ # AI 추천 (벡터 검색 + Bedrock 코멘트)
+│   ├── user/        # 사용자 프로필 관리
+│   ├── library/     # 도서관 + 장서 보유 엔티티
+│   └── inventory/   # 장서/대출 현황 조회
+└── infra/
+    ├── ai/          # AiServerClient (임베딩) + BedrockClient (생성AI)
+    ├── kakao/       # KakaoBookClient (도서 검색)
+    └── library/     # LibraryApiClient + Spring Batch 동기화
+```
+
 ---
 
 ## 4. Frontend (`/frontend`)
@@ -62,13 +92,29 @@
 - **Core Libraries**: React 19.2, Vite 8
 - **Routing**: `react-router-dom` 7 (인증/프로필 유무에 따른 Protected 라우팅 처리 — `App.jsx`)
 - **Data Visualization**: `recharts` 3 (독서 페르소나 6대 지표 레이더 차트, 대출 통계 등 시각화)
-- **Styling**: `index.css`를 통한 Vanilla CSS 및 CSS 변수 기반 디자인 시스템 (벚꽃 핑크 × 퍼플 컬러 테마). Tailwind 설정 파일 존재하나 주요 스타일링은 Vanilla CSS 활용
-- **Key Pages (13개)**: `LoginPage`, `UserInfoPage`, `MainPage`, `SurveyPage`, `LoadingPage`, `PersonaResultPage`, `BookLoadingPage`, `BookResultPage`, `BookDetailPage`, `SearchPage`, `RankingPage`, `InventoryPage`, `MyPage`
+- **Styling**: `index.css`를 통한 Vanilla CSS 및 CSS 변수 기반 디자인 시스템 (벚꽃 핑크 × 퍼플 컬러 테마)
+- **Icons**: `lucide-react`
+- **Key Pages (13개)**:
+  | 페이지 | 경로 | 설명 |
+  |--------|------|------|
+  | `LoginPage` | `/login` | 카카오 소셜 로그인 |
+  | `UserInfoPage` | `/user-info` | 최초 로그인 프로필 설정 |
+  | `MainPage` | `/` | 메인 (설문 시작 유도) |
+  | `SurveyPage` | `/survey` | 독서 성향 설문 |
+  | `LoadingPage` | `/loading` | 페르소나 분석 중 |
+  | `PersonaResultPage` | `/result` | 페르소나 결과 + 레이더 차트 |
+  | `BookLoadingPage` | `/book-loading` | 도서 추천 중 |
+  | `BookResultPage` | `/books` | 추천 도서 목록 |
+  | `BookDetailPage` | `/books/:bookId` | 도서 상세 정보 |
+  | `SearchPage` | `/search` | 카카오 도서 검색 |
+  | `RankingPage` | `/ranking` | 인기 대출 도서 랭킹 |
+  | `InventoryPage` | `/inventory` | 도서관 장서/대출 현황 |
+  | `MyPage` | `/mypage` | 마이페이지 |
 
 ---
 
-## 5. AI Server (`/ai-server`)
-도서 정보 및 사용자의 텍스트를 벡터로 변환하는 마이크로서비스.
+## 5. AI Server (외부 컨테이너)
+도서 정보 및 사용자의 텍스트를 벡터로 변환하는 마이크로서비스. Docker Compose의 `ai-server` 서비스로 구동.
 
 - **Language / Framework**: Python 3.11, FastAPI, Uvicorn
 - **Embeddings**: Sentence-Transformers 기반 `jhgan/ko-sroberta-multitask` 모델 사용. 입력 텍스트를 768차원 실수 리스트(벡터)로 변환하여 JSON 배열로 반환
@@ -82,7 +128,8 @@
 
 ### 1. 인증 및 프로필 설정 (Auth Flow)
 - 카카오 소셜 로그인 완료 후 `OAuth2SuccessHandler`에서 JWT 발급
-- 프론트엔드 라우팅에서 `/api/users/me` 호출 후 최초 로그인 사용자(성별 데이터 등 누락)는 강제로 `/user-info` 페이지로 이동시켜 프로필을 완성함
+- 프론트엔드 `App.jsx`에서 `/api/auth/refresh` → `/api/users/me` 순서로 인증 상태 확인
+- 최초 로그인 사용자(gender 데이터 누락)는 강제로 `/user-info` 페이지로 이동시켜 프로필을 완성함
 
 ### 2. 독서 페르소나 분석 파이프라인
 1. 사용자가 12가지 항목의 독서 성향 설문(`SurveyPage`) 완료
@@ -109,8 +156,7 @@
 
 ## 7. Observability Stack
 | 구성 요소 | 기술 | 엔드포인트 |
-|-----------|------|-----------|
+|-----------|------|-----------| 
 | 백엔드 메트릭 | Micrometer Prometheus | `/actuator/prometheus` |
 | AI 서버 메트릭 | prometheus-fastapi-instrumentator | `/metrics` |
 | 분산 추적 | OpenTelemetry (OTLP) | OTLP Collector로 전송 |
-| 로그 수집 | Fluent Bit DaemonSet | K8s 컨테이너 로그 → 외부 로그 백엔드 |

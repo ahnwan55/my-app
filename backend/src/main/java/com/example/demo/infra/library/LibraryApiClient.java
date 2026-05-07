@@ -24,8 +24,6 @@ public class LibraryApiClient {
 
     private final XmlMapper xmlMapper = new XmlMapper();
 
-    // ── 공통 유틸 ──────────────────────────────────────────────────────────
-
     private LibraryApiResponse parseXml(String xml) {
         if (xml == null || xml.isBlank()) return null;
         try {
@@ -37,11 +35,11 @@ public class LibraryApiClient {
     }
 
     private List<LibraryApiResponse.BookItem> extractBooks(LibraryApiResponse response) {
-        if (response == null || response.getDocs() == null) {
+        if (response == null || response.getDoc() == null) {
             log.warn("[LibraryApiClient] 응답 데이터가 없습니다.");
             return List.of();
         }
-        return response.getDocs();
+        return response.getDoc();
     }
 
     private boolean isApiKeyNotSet() {
@@ -51,8 +49,6 @@ public class LibraryApiClient {
         }
         return false;
     }
-
-    // ── API 호출 메서드 ────────────────────────────────────────────────────
 
     /**
      * 이달의 인기대출도서 Top N 조회
@@ -103,11 +99,11 @@ public class LibraryApiClient {
         LibraryApiResponse response = parseXml(xml);
 
         if (response == null
-                || response.getDetail() == null
-                || response.getDetail().isEmpty()) {
+                || response.getBook() == null
+                || response.getBook().isEmpty()) {
             return null;
         }
-        return response.getDetail().get(0);
+        return response.getBook().get(0);
     }
 
     /**

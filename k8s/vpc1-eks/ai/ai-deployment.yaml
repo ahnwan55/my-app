@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: ai-server
-        image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_ai:141a3f540137df7af90df0f3f8f1593e21514c56
+        image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_ai:6e3c8360a01ea96577da7298d8a208b7f14d5fe2
         ports:
         - containerPort: 8000
         envFrom:

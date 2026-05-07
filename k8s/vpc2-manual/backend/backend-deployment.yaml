@@ -21,7 +21,7 @@ spec:
       - name: ecr-secret
       containers:
       - name: backend
-        image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_be:1bb263b285e2b7a8a7d7a82a4cb6f31a1efd5fb3
+        image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_be:e394e3e416768130813f16248dc2ffff735608a8
         ports:
         - containerPort: 8080
         resources:

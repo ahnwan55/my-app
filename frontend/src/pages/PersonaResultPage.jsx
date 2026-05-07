@@ -289,7 +289,7 @@ const S = {
   cardDeco:    { position: "absolute", top: -40, right: -40, width: 160, height: 160, borderRadius: "50%" },
   cardTop:     { display: "flex", alignItems: "center", gap: 16, marginBottom: 12, position: "relative" },
   personaEmoji:{ fontSize: 48, lineHeight: 1 },
-  personaName: { fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 800, color: C.gray800, margin: "0 0 2px" },
+  personaName: { fontFamily: "'Noto Sans KR', sans-serif", fontSize: 22, fontWeight: 800, color: C.gray800, margin: "0 0 2px" },
   personaDesc: { fontSize: 13, color: C.gray700, lineHeight: 1.7, position: "relative", margin: 0 },
   section:     { background: "rgba(255,255,255,0.75)", backdropFilter: "blur(12px)", border: `1px solid ${C.pinkLight}`, borderRadius: 20, padding: "20px", marginBottom: 16 },
   sectionTitle:{ fontSize: 14, fontWeight: 800, color: C.gray800, margin: "0 0 4px" },

@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_be:1343259173d8abd50ef70f345990bc14b91d9652
+        image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_be:f2958692aa9341f072dd13affc862f4409797b3c
         ports:
         - containerPort: 8080
         resources:

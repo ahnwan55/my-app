@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_be:a335f841ce895523a1ac7ab0a84f6123556d2c6e
+        image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_be:d0c7400edd1b7a6e3870f19ae4f7ed2eff506169
         ports:
         - containerPort: 8080
         resources:
@@ -33,14 +33,29 @@ spec:
           httpGet:
             path: /actuator/health
             port: 8080
-          initialDelaySeconds: 120
-          periodSeconds: 10
+          initialDelaySeconds: 150
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 5
         livenessProbe:
           httpGet:
             path: /actuator/health
             port: 8080
-          initialDelaySeconds: 180
+          initialDelaySeconds: 200
           periodSeconds: 20
+          timeoutSeconds: 10
+          failureThreshold: 5
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://10.2.0.225:4317"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+        - name: OTEL_SERVICE_NAME
+          value: "backend"
+        - name: OTEL_LOGS_EXPORTER
+          value: "none"
+        - name: OTEL_METRICS_EXPORTER
+          value: "none"
         envFrom:
         - configMapRef:
             name: backend-config

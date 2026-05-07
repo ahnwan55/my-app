@@ -44,7 +44,8 @@ public class SecurityConfig {
                                 "/oauth2/**",
                                 "/api/books/**",
                                 "/api/libraries/**",
-                                "/api/inventory"
+                                "/api/inventory",
+                                "/chaos-test/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

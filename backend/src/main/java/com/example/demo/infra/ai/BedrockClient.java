@@ -47,7 +47,7 @@ public class BedrockClient {
      */
     public BedrockAnalysisResult classifyPersona(Map<String, String> surveyAnswers) {
         String prompt = buildPersonaPrompt(surveyAnswers);
-        String rawResponse = invokeModel(prompt);
+        String rawResponse = invokeModel(prompt, 1000);
 
         try {
             JsonNode json = objectMapper.readTree(rawResponse);
@@ -86,7 +86,8 @@ public class BedrockClient {
                                            List<Map<String, Object>> books) {
         String prompt = buildRecommendPrompt(profile, books);
         try {
-            return invokeModel(prompt);
+            // 추천 코멘트는 150자 이내이므로 max_tokens를 300으로 제한
+            return invokeModel(prompt, 300);
         } catch (Exception e) {
             log.warn("[BedrockClient] 추천 코멘트 생성 실패 (추천은 정상 진행): {}", e.getMessage());
             return null;
@@ -97,14 +98,15 @@ public class BedrockClient {
 
     /**
      * Bedrock Claude API 호출 공통 메서드.
-     * 응답의 content[0].text 값을 추출하여 반환한다.
+     *
+     * @param prompt    호출할 프롬프트
+     * @param maxTokens 최대 토큰 수 (페르소나 판별: 1000, 추천 코멘트: 300)
      */
-    private String invokeModel(String prompt) {
+    private String invokeModel(String prompt, int maxTokens) {
         try {
-            // Bedrock Claude Messages API 요청 바디 구성
             String requestBody = objectMapper.writeValueAsString(Map.of(
                 "anthropic_version", "bedrock-2023-05-31",
-                "max_tokens", 1000,
+                "max_tokens", maxTokens,
                 "messages", List.of(
                     Map.of("role", "user", "content", prompt)
                 )
@@ -189,18 +191,29 @@ public class BedrockClient {
 
     /**
      * 추천 코멘트 프롬프트.
-     * 페르소나 유형과 추천 도서 목록을 바탕으로 2~3문장의 추천 이유를 생성한다.
+     *
+     * [제약 조건]
+     *   - 전체 응답 150자 이내 (한국어 기준)
+     *   - 마크다운 사용 금지 (**, >, -, ## 등)
+     *   - 도서 제목 나열 금지
+     *   - 페르소나 성향 중심의 한두 문장으로 작성
      */
     private String buildRecommendPrompt(Map<String, Object> profile,
                                         List<Map<String, Object>> books) {
         StringBuilder sb = new StringBuilder();
-        sb.append("독서 페르소나 '").append(profile.get("persona_name")).append("'에게 ");
-        sb.append("어울리는 도서 추천 이유를 2~3문장으로 작성해주세요.\n\n");
-        sb.append("추천 도서 목록:\n");
+        sb.append("아래 조건을 반드시 지켜 추천 코멘트를 작성하세요.\n\n");
+        sb.append("[조건]\n");
+        sb.append("- 전체 응답은 150자 이내로 작성합니다.\n");
+        sb.append("- 마크다운 문법(**, >, -, ## 등)을 절대 사용하지 않습니다.\n");
+        sb.append("- 도서 제목을 나열하지 않습니다.\n");
+        sb.append("- '").append(profile.get("persona_name")).append("' 페르소나의 성향에 공감하는 ");
+        sb.append("따뜻한 한두 문장으로 작성합니다.\n\n");
+        sb.append("추천 도서 목록 (참고용, 직접 언급 금지):\n");
         books.forEach(book ->
             sb.append("- ").append(book.get("title"))
               .append(" (").append(book.get("authors")).append(")\n")
         );
+        sb.append("\n위 조건을 모두 지킨 추천 코멘트만 출력하세요. 다른 텍스트는 출력하지 마세요.");
         return sb.toString();
     }
 }

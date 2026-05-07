@@ -19,7 +19,7 @@ spec:
       - name: ecr-secret
       containers:
       - name: ai-server
-        image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_ai:899a7e51f9f818c8d76acff073589fe3751183df
+        image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_ai:latest
         ports:
         - containerPort: 8000
         envFrom:
@@ -27,20 +27,8 @@ spec:
             name: backend-secrets
         resources:
           requests:
-            cpu: 500m
-            memory: 2Gi
+            cpu: 100m
+            memory: 256Mi
           limits:
-            cpu: 1000m
-            memory: 4Gi
-        readinessProbe:
-          tcpSocket:
-            port: 8000
-          initialDelaySeconds: 180
-          periodSeconds: 20
-          timeoutSeconds: 10
-        livenessProbe:
-          tcpSocket:
-            port: 8000
-          initialDelaySeconds: 240
-          periodSeconds: 30
-          timeoutSeconds: 10
+            cpu: 500m
+            memory: 1Gi

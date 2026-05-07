@@ -35,13 +35,8 @@ WORKDIR /app
 # Stage 1에서 빌드된 JAR만 복사 (Gradle 캐시, 소스코드 등은 포함 안 됨)
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-# OpenTelemetry Java Agent 다운로드
-# Spring Boot 앱에 자동 계측(auto-instrumentation)을 적용하여
-# Tempo로 트레이스 데이터를 전송하기 위해 필요
-ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar opentelemetry-javaagent.jar
-
 # 파일 소유권을 appuser에게 부여
-RUN chown appuser:appgroup app.jar opentelemetry-javaagent.jar
+RUN chown appuser:appgroup app.jar
 
 # appuser로 전환 (root 권한 불필요)
 USER appuser
@@ -52,12 +47,10 @@ EXPOSE 8080
 # ────────────────────────────────────────────
 # 실행 옵션 설명:
 #   -Djava.security.egd: Tomcat 시작 속도 개선 (난수 생성기 설정)
-#   -javaagent: OTEL Java Agent 로드 (트레이스 자동 계측)
 #   spring.profiles.active: 환경변수로 주입받음 (기본값 local)
 # ────────────────────────────────────────────
 ENV SPRING_PROFILES_ACTIVE=local
 
 ENTRYPOINT ["java", \
   "-Djava.security.egd=file:/dev/./urandom", \
-  "-javaagent:/app/opentelemetry-javaagent.jar", \
   "-jar", "app.jar"]

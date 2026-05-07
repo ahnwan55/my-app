@@ -5,6 +5,7 @@ import com.example.demo.domain.book.entity.MonthlyPopularBook;
 import com.example.demo.domain.book.repository.BookRepository;
 import com.example.demo.domain.book.repository.MonthlyPopularBookRepository;
 import com.example.demo.infra.library.dto.LibraryApiResponse;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.Chunk;
@@ -15,9 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-/**
- * 인기대출도서 → books + monthly_popular_book upsert
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -25,6 +23,7 @@ public class MonthlyPopularItemWriter implements ItemWriter<LibraryApiResponse.B
 
     private final BookRepository bookRepository;
     private final MonthlyPopularBookRepository monthlyPopularBookRepository;
+    private final EntityManager entityManager;
 
     private static final DateTimeFormatter MONTH_FMT =
             DateTimeFormatter.ofPattern("yyyy-MM");
@@ -36,21 +35,19 @@ public class MonthlyPopularItemWriter implements ItemWriter<LibraryApiResponse.B
     public void write(Chunk<? extends LibraryApiResponse.BookItem> chunk) {
         String yearMonth = LocalDate.now().format(MONTH_FMT);
 
-        // 첫 청크 시작 시 기존 이달 랭킹 삭제
         if (rankingCounter == 1) {
             monthlyPopularBookRepository.deleteByYearMonth(yearMonth);
+            entityManager.flush();
             log.info("[MonthlyPopularItemWriter] 기존 {}월 랭킹 삭제", yearMonth);
         }
 
         for (LibraryApiResponse.BookItem item : chunk.getItems()) {
 
-            // isbn13 없으면 스킵
             if (item.getIsbn13() == null || item.getIsbn13().isBlank()) {
                 log.warn("[MonthlyPopularItemWriter] isbn13 없음 스킵: {}", item.getBookname());
                 continue;
             }
 
-            // books upsert
             Book book = bookRepository.findById(item.getIsbn13())
                     .orElseGet(() -> bookRepository.save(
                             Book.builder()
@@ -65,7 +62,6 @@ public class MonthlyPopularItemWriter implements ItemWriter<LibraryApiResponse.B
                                     .build()
                     ));
 
-            // monthly_popular_book 저장
             monthlyPopularBookRepository.save(
                     MonthlyPopularBook.builder()
                             .yearMonth(yearMonth)

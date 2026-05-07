@@ -122,7 +122,7 @@ const S = {
     fontSize: 28, boxShadow: "0 8px 24px rgba(244,114,182,0.35)",
     marginBottom: 12,
   },
-  logoText: { fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 800, color: C.gray800, margin: "0 0 6px" },
+  logoText: { fontFamily: "'Noto Sans KR', sans-serif", fontSize: 26, fontWeight: 800, color: C.gray800, margin: "0 0 6px" },
   logoSub:  { fontSize: 12, color: C.gray500, margin: 0 },
 
   /* 일러스트 */
@@ -144,7 +144,7 @@ const S = {
 
   /* 소개 문구 */
   descWrap:  { textAlign: "center", marginBottom: 32 },
-  descTitle: { fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 800, color: C.gray800, margin: "0 0 10px" },
+  descTitle: { fontFamily: "'Noto Sans KR', sans-serif", fontSize: 20, fontWeight: 800, color: C.gray800, margin: "0 0 10px" },
   descText:  { fontSize: 13, color: C.gray500, lineHeight: 1.8, margin: 0 },
 
   /* 카카오 버튼 */

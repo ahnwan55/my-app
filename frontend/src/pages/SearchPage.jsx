@@ -179,7 +179,7 @@ const styles = {
     fontSize: 20, boxShadow: "0 8px 20px rgba(244,114,182,0.35)",
   },
   headerLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", color: C.pink, textTransform: "uppercase" },
-  title: { fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 800, color: C.gray800, margin: "0 0 20px" },
+  title: { fontFamily: "'Noto Sans KR', sans-serif", fontSize: 26, fontWeight: 800, color: C.gray800, margin: "0 0 20px" },
   searchBox: { display: "flex", gap: 8, marginBottom: 20 },
   searchInput: {
     flex: 1, padding: "13px 16px",

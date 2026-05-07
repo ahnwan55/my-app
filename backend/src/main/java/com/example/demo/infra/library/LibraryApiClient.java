@@ -50,10 +50,6 @@ public class LibraryApiClient {
         return false;
     }
 
-    /**
-     * 이달의 인기대출도서 Top N 조회
-     * GET /api/loanItemSrch
-     */
     public List<LibraryApiResponse.BookItem> getMonthlyPopular(
             String startDt, String endDt, int pageSize) {
         if (isApiKeyNotSet()) return List.of();
@@ -73,13 +69,13 @@ public class LibraryApiClient {
                 .bodyToMono(String.class)
                 .block();
 
-        return extractBooks(parseXml(xml));
+        log.info("[LibraryApiClient] 원본 XML: {}", xml);
+        LibraryApiResponse parsed = parseXml(xml);
+        log.info("[LibraryApiClient] 파싱 결과 doc: {}", parsed != null ? parsed.getDoc() : "null");
+
+        return extractBooks(parsed);
     }
 
-    /**
-     * 도서 상세 조회 (description 수집 전용)
-     * GET /api/srchDtlList
-     */
     public LibraryApiResponse.BookDetail getBookDetail(String isbn13) {
         if (isApiKeyNotSet()) return null;
 
@@ -106,10 +102,6 @@ public class LibraryApiClient {
         return response.getBook().get(0);
     }
 
-    /**
-     * 정보공개 도서관 목록 조회 (서울 전체)
-     * GET /api/libSrch
-     */
     public LibraryApiResponse getLibraries(int pageNo, int pageSize) {
         if (isApiKeyNotSet()) return null;
 

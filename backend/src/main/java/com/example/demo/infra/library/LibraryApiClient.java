@@ -24,8 +24,6 @@ public class LibraryApiClient {
 
     private final XmlMapper xmlMapper = new XmlMapper();
 
-    // ── 공통 유틸 ──────────────────────────────────────────────────────────
-
     private LibraryApiResponse parseXml(String xml) {
         if (xml == null || xml.isBlank()) return null;
         try {
@@ -37,11 +35,11 @@ public class LibraryApiClient {
     }
 
     private List<LibraryApiResponse.BookItem> extractBooks(LibraryApiResponse response) {
-        if (response == null || response.getDocs() == null) {
+        if (response == null || response.getDoc() == null) {
             log.warn("[LibraryApiClient] 응답 데이터가 없습니다.");
             return List.of();
         }
-        return response.getDocs();
+        return response.getDoc();
     }
 
     private boolean isApiKeyNotSet() {
@@ -52,12 +50,6 @@ public class LibraryApiClient {
         return false;
     }
 
-    // ── API 호출 메서드 ────────────────────────────────────────────────────
-
-    /**
-     * 이달의 인기대출도서 Top N 조회
-     * GET /api/loanItemSrch
-     */
     public List<LibraryApiResponse.BookItem> getMonthlyPopular(
             String startDt, String endDt, int pageSize) {
         if (isApiKeyNotSet()) return List.of();
@@ -77,13 +69,13 @@ public class LibraryApiClient {
                 .bodyToMono(String.class)
                 .block();
 
-        return extractBooks(parseXml(xml));
+        log.info("[LibraryApiClient] 원본 XML: {}", xml);
+        LibraryApiResponse parsed = parseXml(xml);
+        log.info("[LibraryApiClient] 파싱 결과 doc: {}", parsed != null ? parsed.getDoc() : "null");
+
+        return extractBooks(parsed);
     }
 
-    /**
-     * 도서 상세 조회 (description 수집 전용)
-     * GET /api/srchDtlList
-     */
     public LibraryApiResponse.BookDetail getBookDetail(String isbn13) {
         if (isApiKeyNotSet()) return null;
 
@@ -103,17 +95,13 @@ public class LibraryApiClient {
         LibraryApiResponse response = parseXml(xml);
 
         if (response == null
-                || response.getDetail() == null
-                || response.getDetail().isEmpty()) {
+                || response.getBook() == null
+                || response.getBook().isEmpty()) {
             return null;
         }
-        return response.getDetail().get(0);
+        return response.getBook().get(0);
     }
 
-    /**
-     * 정보공개 도서관 목록 조회 (서울 전체)
-     * GET /api/libSrch
-     */
     public LibraryApiResponse getLibraries(int pageNo, int pageSize) {
         if (isApiKeyNotSet()) return null;
 

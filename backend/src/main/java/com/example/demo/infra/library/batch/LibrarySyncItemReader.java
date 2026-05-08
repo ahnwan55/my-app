@@ -10,10 +10,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 정보공개 도서관 목록 읽기 (서울 전체 페이징)
- * libraries 테이블 적재에 사용
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -39,9 +35,6 @@ public class LibrarySyncItemReader implements ItemReader<LibraryApiResponse.LibI
         return null;
     }
 
-    /**
-     * 페이징으로 서울 전체 도서관 목록 수집
-     */
     private List<LibraryApiResponse.LibItem> fetchAll() {
         List<LibraryApiResponse.LibItem> result = new ArrayList<>();
         int pageNo = 1;
@@ -51,16 +44,15 @@ public class LibrarySyncItemReader implements ItemReader<LibraryApiResponse.LibI
                     libraryApiClient.getLibraries(pageNo, PAGE_SIZE);
 
             if (response == null
-                    || response.getLibs() == null
-                    || response.getLibs().isEmpty()) {
+                    || response.getLib() == null
+                    || response.getLib().isEmpty()) {
                 break;
             }
 
-            result.addAll(response.getLibs());
-            log.info("[LibrarySyncItemReader] pageNo={} {}건 수집", pageNo, response.getLibs().size());
+            result.addAll(response.getLib());
+            log.info("[LibrarySyncItemReader] pageNo={} {}건 수집", pageNo, response.getLib().size());
 
-            // 마지막 페이지 확인
-            if (response.getLibs().size() < PAGE_SIZE) {
+            if (response.getLib().size() < PAGE_SIZE) {
                 break;
             }
 

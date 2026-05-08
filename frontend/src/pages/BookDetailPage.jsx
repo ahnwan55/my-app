@@ -1,18 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
-/**
- * BookDetailPage.jsx — 도서 상세 페이지
- *
- * [변경 사항]
- *   - wrap의 overflow: "hidden" → "visible" 로 변경
- *     (기존 hidden이 긴 줄거리 텍스트를 잘라내는 원인이었음)
- *   - bgDecor를 position: fixed 로 유지해 배경 blob은 그대로 동작
- *   - DescriptionBlock 컴포넌트 추가
- *     줄거리가 200자를 초과하면 접힌 상태로 시작하고
- *     "더 보기 ▼ / 접기 ▲" 버튼으로 전체 텍스트를 펼칠 수 있다.
- */
-
 const C = {
   pink:        "#f472b6",
   pinkDark:    "#ec4899",
@@ -45,36 +33,30 @@ const STATUS_CONFIG = {
   ERROR:     { label: "조회 실패", color: C.red,    bg: C.redBg,    border: C.redBorder,    emoji: "⚠️" },
 };
 
-/* ────────────────────────────────────────
-   DescriptionBlock — 줄거리 컴포넌트
-   200자 초과 시 접힌 상태로 시작.
-   더 보기 버튼으로 전체 텍스트 펼침.
-   ──────────────────────────────────────── */
 const COLLAPSE_LIMIT = 200;
 
 function DescriptionBlock({ text }) {
   const isLong = text.length > COLLAPSE_LIMIT;
   const [expanded, setExpanded] = useState(!isLong);
-
   const displayed = expanded ? text : text.slice(0, COLLAPSE_LIMIT) + "…";
 
   return (
-    <div>
-      <p style={S.description}>{displayed}</p>
-      {isLong && (
-        <button
-          onClick={() => setExpanded(e => !e)}
-          style={{
-            background: "none", border: "none",
-            color: C.pink, fontSize: 13, fontWeight: 700,
-            cursor: "pointer", padding: "6px 0 0",
-            fontFamily: "'Noto Sans KR', sans-serif",
-          }}
-        >
-          {expanded ? "접기 ▲" : "더 보기 ▼"}
-        </button>
-      )}
-    </div>
+      <div>
+        <p style={S.description}>{displayed}</p>
+        {isLong && (
+            <button
+                onClick={() => setExpanded(e => !e)}
+                style={{
+                  background: "none", border: "none",
+                  color: C.pink, fontSize: 13, fontWeight: 700,
+                  cursor: "pointer", padding: "6px 0 0",
+                  fontFamily: "'Noto Sans KR', sans-serif",
+                }}
+            >
+              {expanded ? "접기 ▲" : "더 보기 ▼"}
+            </button>
+        )}
+      </div>
   );
 }
 
@@ -99,7 +81,6 @@ export default function BookDetailPage() {
         setBook(await res.json());
       } catch (e) {
         setBookError("도서 정보를 불러오는 데 실패했어요.");
-        console.error("[BookDetailPage] 도서 조회 실패:", e);
       } finally {
         setBookLoading(false);
       }
@@ -116,7 +97,6 @@ export default function BookDetailPage() {
         setInventory(await res.json());
       } catch (e) {
         setInventoryError("재고 정보를 불러오는 데 실패했어요.");
-        console.error("[BookDetailPage] 재고 조회 실패:", e);
       } finally {
         setInventoryLoading(false);
       }
@@ -126,148 +106,148 @@ export default function BookDetailPage() {
 
   if (bookLoading) {
     return (
-      <div style={{ ...S.wrap, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <BgDecor />
-        <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
-          <div style={S.spinner} />
-          <p style={{ fontSize: 13, color: C.gray400, marginTop: 16 }}>도서 정보를 불러오는 중...</p>
+        <div style={{ ...S.wrap, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <BgDecor />
+          <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+            <div style={S.spinner} />
+            <p style={{ fontSize: 13, color: C.gray400, marginTop: 16 }}>도서 정보를 불러오는 중...</p>
+          </div>
+          <style>{SPIN_CSS}</style>
         </div>
-        <style>{SPIN_CSS}</style>
-      </div>
     );
   }
 
   if (bookError) {
     return (
-      <div style={{ ...S.wrap, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <BgDecor />
-        <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "0 24px" }}>
-          <span style={{ fontSize: 48 }}>😢</span>
-          <p style={{ fontSize: 15, color: C.gray700, margin: "16px 0 20px", fontWeight: 700 }}>{bookError}</p>
-          <button style={S.retryBtn} onClick={() => navigate(-1)}>돌아가기</button>
+        <div style={{ ...S.wrap, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <BgDecor />
+          <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "0 24px" }}>
+            <span style={{ fontSize: 48 }}>😢</span>
+            <p style={{ fontSize: 15, color: C.gray700, margin: "16px 0 20px", fontWeight: 700 }}>{bookError}</p>
+            <button style={S.retryBtn} onClick={() => navigate(-1)}>돌아가기</button>
+          </div>
         </div>
-      </div>
     );
   }
 
   return (
-    <div style={S.wrap}>
-      <BgDecor />
+      <div style={S.wrap}>
+        <BgDecor />
 
-      <button style={S.backBtn} onClick={() => navigate(-1)}>
-        ← 뒤로
-      </button>
+        <div style={{ ...S.inner, position: "relative" }}>
 
-      <div style={S.inner}>
+          {/* ── 뒤로 버튼 ── */}
+          <button style={S.backBtn} onClick={() => navigate(-1)}>
+            ← 뒤로
+          </button>
 
-        {/* ── 표지 + 기본 정보 ── */}
-        <div style={S.topSection}>
-          <div style={S.coverBox}>
-            {book.coverUrl
-              ? <img src={book.coverUrl} alt={book.title} style={S.coverImg} />
-              : <BookIcon />
-            }
+          {/* ── 표지 + 기본 정보 ── */}
+          <div style={S.topSection}>
+            <div style={S.coverBox}>
+              {book.coverUrl
+                  ? <img src={book.coverUrl} alt={book.title} style={S.coverImg} />
+                  : <BookIcon />
+              }
+            </div>
+            <div style={S.infoBox}>
+              {book.kdc && <span style={S.kdcTag}>{book.kdc}</span>}
+              <h1 style={S.title}>{book.title}</h1>
+              <p style={S.author}>{book.author}</p>
+              {book.publisher && (
+                  <p style={S.publisher}>{book.publisher}{book.pubYear ? ` · ${book.pubYear}` : ""}</p>
+              )}
+            </div>
           </div>
-          <div style={S.infoBox}>
-            {book.kdc && <span style={S.kdcTag}>{book.kdc}</span>}
-            <h1 style={S.title}>{book.title}</h1>
-            <p style={S.author}>{book.author}</p>
-            {book.publisher && (
-              <p style={S.publisher}>{book.publisher}{book.pubYear ? ` · ${book.pubYear}` : ""}</p>
-            )}
-          </div>
-        </div>
 
-        {/* ── 줄거리 ── */}
-        {book.description && (
+          {/* ── 줄거리 ── */}
+          {book.description && (
+              <section style={S.section}>
+                <h2 style={S.sectionTitle}>📖 줄거리</h2>
+                <DescriptionBlock text={book.description} />
+              </section>
+          )}
+
+          {/* ── 내 도서관 재고 현황 ── */}
           <section style={S.section}>
-            <h2 style={S.sectionTitle}>📖 줄거리</h2>
-            {/* DescriptionBlock이 길이에 따라 접기/펼치기 처리 */}
-            <DescriptionBlock text={book.description} />
-          </section>
-        )}
+            <h2 style={S.sectionTitle}>📍 내 도서관 재고 현황</h2>
 
-        {/* ── 내 도서관 재고 현황 ── */}
-        <section style={S.section}>
-          <h2 style={S.sectionTitle}>📍 내 도서관 재고 현황</h2>
+            {inventoryLoading && (
+                <div style={S.inventoryLoading}>
+                  <div style={{ ...S.spinner, width: 24, height: 24, borderWidth: 2 }} />
+                  <p style={{ fontSize: 13, color: C.gray400, margin: 0 }}>재고 확인 중...</p>
+                  <style>{SPIN_CSS}</style>
+                </div>
+            )}
 
-          {inventoryLoading && (
-            <div style={S.inventoryLoading}>
-              <div style={{ ...S.spinner, width: 24, height: 24, borderWidth: 2 }} />
-              <p style={{ fontSize: 13, color: C.gray400, margin: 0 }}>재고 확인 중...</p>
-              <style>{SPIN_CSS}</style>
-            </div>
-          )}
+            {!inventoryLoading && inventoryError && (
+                <p style={S.inventoryError}>{inventoryError}</p>
+            )}
 
-          {!inventoryLoading && inventoryError && (
-            <p style={S.inventoryError}>{inventoryError}</p>
-          )}
+            {!inventoryLoading && !inventoryError && inventory.length === 0 && (
+                <div style={S.emptyInventory}>
+                  <p style={{ margin: "0 0 12px", fontSize: 14, color: C.gray700 }}>
+                    마이페이지에서 도서관을 등록하면 재고를 바로 확인할 수 있어요.
+                  </p>
+                  <button style={S.myPageBtn} onClick={() => navigate("/mypage")}>
+                    도서관 등록하러 가기
+                  </button>
+                </div>
+            )}
 
-          {!inventoryLoading && !inventoryError && inventory.length === 0 && (
-            <div style={S.emptyInventory}>
-              <p style={{ margin: "0 0 12px", fontSize: 14, color: C.gray700 }}>
-                마이페이지에서 도서관을 등록하면 재고를 바로 확인할 수 있어요.
-              </p>
-              <button style={S.myPageBtn} onClick={() => navigate("/mypage")}>
-                도서관 등록하러 가기
-              </button>
-            </div>
-          )}
-
-          {!inventoryLoading && inventory.length > 0 && (
-            <div style={S.inventoryList}>
-              {inventory.map((item) => {
-                const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.ERROR;
-                return (
-                  <div
-                    key={item.libCode}
-                    style={{ ...S.inventoryCard, borderColor: cfg.border, background: cfg.bg }}
-                  >
+            {!inventoryLoading && inventory.length > 0 && (
+                <div style={S.inventoryList}>
+                  {inventory.map((item) => {
+                    const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.ERROR;
+                    return (
+                        <div
+                            key={item.libCode}
+                            style={{ ...S.inventoryCard, borderColor: cfg.border, background: cfg.bg }}
+                        >
                     <span style={{ ...S.statusBadge, color: cfg.color }}>
                       {cfg.emoji} {cfg.label}
                     </span>
-                    <p style={S.libName}>{item.libName}</p>
-                    <p style={S.libCode}>{item.libCode}</p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                          <p style={S.libName}>{item.libName}</p>
+                          <p style={S.libCode}>{item.libCode}</p>
+                        </div>
+                    );
+                  })}
+                </div>
+            )}
 
-          {!inventoryLoading && (
-            <button
-              style={S.moreLibBtn}
-              onClick={() => navigate(`/inventory?isbn=${bookId}`)}
-            >
-              🔍 다른 도서관에서도 찾기
-            </button>
-          )}
-        </section>
+            {!inventoryLoading && (
+                <button
+                    style={S.moreLibBtn}
+                    onClick={() => navigate(`/inventory?isbn=${bookId}`)}
+                >
+                  🔍 다른 도서관에서도 찾기
+                </button>
+            )}
+          </section>
 
+        </div>
+        <style>{SPIN_CSS}</style>
       </div>
-      <style>{SPIN_CSS}</style>
-    </div>
   );
 }
 
 function BgDecor() {
   return (
-    <div style={S.bgDecor} aria-hidden="true">
-      <div style={{ ...S.blob, top: -80, right: -80, background: "#fbcfe8" }} />
-      <div style={{ ...S.blob, bottom: -80, left: -80, background: "#e9d5ff" }} />
-    </div>
+      <div style={S.bgDecor} aria-hidden="true">
+        <div style={{ ...S.blob, top: -80, right: -80, background: "#fbcfe8" }} />
+        <div style={{ ...S.blob, bottom: -80, left: -80, background: "#e9d5ff" }} />
+      </div>
   );
 }
 
 function BookIcon() {
   return (
-    <svg width={60} height={78} viewBox="0 0 36 48" fill="none">
-      <rect x="1" y="1" width="34" height="46" rx="3" fill={C.pinkLight} stroke={C.pink} strokeWidth="1.5" />
-      <line x1="7" y1="1" x2="7" y2="47" stroke={C.pink} strokeWidth="1.5" />
-      <line x1="13" y1="12" x2="29" y2="12" stroke={C.pink} strokeWidth="1" opacity="0.6" />
-      <line x1="13" y1="18" x2="29" y2="18" stroke={C.pink} strokeWidth="1" opacity="0.6" />
-      <line x1="13" y1="24" x2="23" y2="24" stroke={C.pink} strokeWidth="1" opacity="0.6" />
-    </svg>
+      <svg width={60} height={78} viewBox="0 0 36 48" fill="none">
+        <rect x="1" y="1" width="34" height="46" rx="3" fill={C.pinkLight} stroke={C.pink} strokeWidth="1.5" />
+        <line x1="7" y1="1" x2="7" y2="47" stroke={C.pink} strokeWidth="1.5" />
+        <line x1="13" y1="12" x2="29" y2="12" stroke={C.pink} strokeWidth="1" opacity="0.6" />
+        <line x1="13" y1="18" x2="29" y2="18" stroke={C.pink} strokeWidth="1" opacity="0.6" />
+        <line x1="13" y1="24" x2="23" y2="24" stroke={C.pink} strokeWidth="1" opacity="0.6" />
+      </svg>
   );
 }
 
@@ -279,11 +259,10 @@ const S = {
     background: `linear-gradient(135deg, ${C.pinkBg}, ${C.white}, #faf5ff)`,
     fontFamily: "'Noto Sans KR', sans-serif",
     position: "relative",
-    overflow: "visible",   // hidden → visible: 줄거리 짤림 원인 제거
+    overflow: "visible",
     paddingBottom: 60,
   },
   bgDecor: {
-    // fixed로 유지 → blob이 화면 밖으로 나가도 스크롤에 영향 없음
     position: "fixed", inset: 0,
     pointerEvents: "none", overflow: "hidden", zIndex: 0,
   },
@@ -292,17 +271,19 @@ const S = {
     borderRadius: "50%", opacity: 0.2, filter: "blur(60px)",
   },
   backBtn: {
-    position: "relative", zIndex: 1,
-    display: "block",
+    position: "absolute",
+    top: 16,
+    left: 0,
+    zIndex: 1,
     background: "none", border: "none",
     color: C.gray500, fontSize: 14, cursor: "pointer",
-    padding: "20px 20px 0",
+    padding: 0,
     fontFamily: "'Noto Sans KR', sans-serif",
   },
   inner: {
     position: "relative", zIndex: 1,
     maxWidth: 480, margin: "0 auto",
-    padding: "16px 20px",
+    padding: "56px 20px 16px",
     display: "flex", flexDirection: "column", gap: 24,
   },
   topSection: {
@@ -328,7 +309,6 @@ const S = {
   title:     { fontSize: 18, fontWeight: 900, color: C.gray800, margin: 0, lineHeight: 1.35, wordBreak: "keep-all" },
   author:    { fontSize: 13, color: C.gray500, margin: 0 },
   publisher: { fontSize: 11, color: C.gray400, margin: 0 },
-
   section: {
     background: "rgba(255,255,255,0.85)",
     backdropFilter: "blur(12px)",
@@ -336,14 +316,11 @@ const S = {
     borderRadius: 20, padding: "20px",
   },
   sectionTitle: { fontSize: 15, fontWeight: 800, color: C.gray800, margin: "0 0 14px" },
-
   description: {
     fontSize: 14, lineHeight: 1.85,
     color: C.gray700, margin: 0,
     wordBreak: "keep-all",
-    // overflow/maxHeight 미사용 — DescriptionBlock에서 텍스트 자르기 처리
   },
-
   inventoryLoading: { display: "flex", alignItems: "center", gap: 10, padding: "8px 0" },
   inventoryError:   { fontSize: 13, color: C.red, margin: 0 },
   emptyInventory:   { textAlign: "center", padding: "8px 0 4px" },
@@ -352,7 +329,6 @@ const S = {
   statusBadge:      { fontSize: 12, fontWeight: 800, display: "block", marginBottom: 6 },
   libName:          { fontSize: 14, fontWeight: 700, color: C.gray800, margin: "0 0 2px" },
   libCode:          { fontSize: 11, color: C.gray400, margin: 0 },
-
   moreLibBtn: {
     width: "100%", padding: "12px 0",
     borderRadius: 14, border: `2px solid ${C.pink}`,

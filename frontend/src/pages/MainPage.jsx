@@ -1,21 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
-/**
- * MainPage.jsx — 메인 랜딩 페이지
- *
- * Props:
- *  onStart {Function} — "페르소나 검사 시작" 버튼 클릭 시 호출
- *                       App.jsx에서 () => navigate("/survey") 전달
- *
- * 내부 이동:
- *  /ranking — 이달의 대출 랭킹
- *  /search  — 도서 검색
- *  /mypage  — 마이페이지 (우측 상단 버튼)
- *
- * 컬러: 벚꽃 핑크(#f472b6) × 퍼플(#a855f7)
- */
-
 const C = {
   pink:        "#f472b6",
   pinkDark:    "#ec4899",
@@ -68,22 +53,21 @@ export default function MainPage({ onStart }) {
   return (
       <div style={styles.wrap}>
 
-        {/* 배경 블러 오브 */}
         <div style={styles.bgDecor} aria-hidden="true">
           <div style={{ ...styles.blob, top: -96, right: -96, background: "#fbcfe8" }} />
           <div style={{ ...styles.blob, bottom: -96, left: -96, background: "#e9d5ff" }} />
         </div>
 
-        {/* ── 우측 상단 마이페이지 버튼 ── */}
-        <button
-          style={styles.myPageBtn}
-          onClick={() => navigate("/mypage")}
-          aria-label="마이페이지"
-        >
-          👤
-        </button>
+        <div style={{ ...styles.inner, position: "relative" }}>
 
-        <div style={styles.inner}>
+          {/* ── 우측 상단 마이페이지 버튼 ── */}
+          <button
+              style={styles.myPageBtn}
+              onClick={() => navigate("/mypage")}
+              aria-label="마이페이지"
+          >
+            👤
+          </button>
 
           {/* 로고 배지 */}
           <div style={styles.badgeRow}>
@@ -102,7 +86,7 @@ export default function MainPage({ onStart }) {
             이달의 인기 도서와 빠른 검색 서비스를 제공합니다.
           </p>
 
-          {/* 메인 CTA — 페르소나 검사 */}
+          {/* 메인 CTA */}
           <div onClick={onStart} style={styles.ctaMain}>
             <div style={styles.ctaMainDeco} aria-hidden="true" />
             <div style={styles.ctaMainInner}>
@@ -118,7 +102,7 @@ export default function MainPage({ onStart }) {
             </div>
           </div>
 
-          {/* 서브 CTA 카드 2개 — 랭킹 / 검색 */}
+          {/* 서브 CTA */}
           <div style={styles.subGrid}>
             <div onClick={() => navigate("/ranking")} style={{ ...styles.subCard, border: `1.5px solid ${C.pinkLight}` }}>
               <span style={styles.subIcon}>📊</span>
@@ -182,12 +166,10 @@ const styles = {
   bgDecor: { position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0 },
   blob:    { position: "absolute", width: 384, height: 384, borderRadius: "50%", opacity: 0.2, filter: "blur(60px)" },
 
-  // 우측 상단 마이페이지 버튼
-  // position: fixed로 스크롤해도 항상 우측 상단에 고정된다.
   myPageBtn: {
-    position: "fixed",
+    position: "absolute",
     top: 16,
-    right: 16,
+    right: 0,
     zIndex: 10,
     width: 44,
     height: 44,

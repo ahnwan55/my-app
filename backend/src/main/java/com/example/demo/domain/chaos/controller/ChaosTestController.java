@@ -4,6 +4,8 @@ import com.example.demo.domain.recommendation.dto.RecommendationDto;
 import com.example.demo.domain.recommendation.service.RecommendationService;
 import com.example.demo.domain.survey.dto.SurveyDto;
 import com.example.demo.domain.survey.service.SurveyService;
+import com.example.demo.domain.book.service.BookRankingService;
+import com.example.demo.domain.book.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,8 @@ public class ChaosTestController {
 
     private final RecommendationService recommendationService;
     private final SurveyService surveyService;
+    private final BookRankingService bookRankingService;
+    private final BookService bookService;
 
     @Operation(summary = "도서 추천 조회 (테스트용)", description = "인증 없이 userId를 파라미터로 받아 페르소나 기반 추천 조회")
     @GetMapping("/recommendations")
@@ -38,5 +42,25 @@ public class ChaosTestController {
             @RequestParam(defaultValue = "1") Long userId,
             @RequestBody SurveyDto.SubmitRequest request) {
         return ResponseEntity.ok(surveyService.submit(userId, request));
+    }
+
+    @Operation(summary = "도서 랭킹 조회 (테스트용)", description = "인증 없이 도서 랭킹 조회 및 Redis 폴백 테스트")
+    @GetMapping("/ranking")
+    public ResponseEntity<?> ranking() {
+        return ResponseEntity.ok(bookRankingService.getRanking());
+    }
+
+    @Operation(summary = "도서 목록/검색 조회 (테스트용)", description = "인증 없이 도서 목록을 검색합니다.")
+    @GetMapping("/books")
+    public ResponseEntity<?> getBooks(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String kdc) {
+        return ResponseEntity.ok(bookService.getBooks(keyword, kdc));
+    }
+
+    @Operation(summary = "도서 단건 조회 (테스트용)", description = "인증 없이 특정 도서 정보를 조회합니다.")
+    @GetMapping("/books/{bookId}")
+    public ResponseEntity<?> getBook(@PathVariable String bookId) {
+        return ResponseEntity.ok(bookService.getBook(bookId));
     }
 }

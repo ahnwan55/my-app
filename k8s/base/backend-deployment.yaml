@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -61,3 +62,68 @@ spec:
             name: backend-config
         - secretRef:
             name: backend-secrets
+=======
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: default
+  labels:
+    app: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+      annotations:
+        kubectl.kubernetes.io/restartedAt: "2026-04-27T16:23"
+    spec:
+      containers:
+      - name: backend
+        image: 558231431060.dkr.ecr.ap-northeast-2.amazonaws.com/bookjjeok_cloud_be:2cd0ee30eef437d89ff557ac52a2ce3f563678c1
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 120
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 5
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 180
+          periodSeconds: 20
+          timeoutSeconds: 10
+          failureThreshold: 5
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://10.2.0.225:4317"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+        - name: OTEL_SERVICE_NAME
+          value: "backend"
+        - name: OTEL_LOGS_EXPORTER
+          value: "none"
+        - name: OTEL_METRICS_EXPORTER
+          value: "none"
+        envFrom:
+        - configMapRef:
+            name: backend-config
+        - secretRef:
+            name: backend-secrets
+>>>>>>> origin/main

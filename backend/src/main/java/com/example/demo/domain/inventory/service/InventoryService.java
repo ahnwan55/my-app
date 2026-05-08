@@ -34,10 +34,12 @@ public class InventoryService {
             Long userId) {
         List<String> targetLibCodes = new ArrayList<>(libCodes);
 
-        userRepository.findById(userId).ifPresent(user -> {
-            addIfAbsent(targetLibCodes, user.getMainLibraryCode());
-            addIfAbsent(targetLibCodes, user.getSubLibraryCode());
-        });
+        if (userId != null) {
+            userRepository.findById(userId).ifPresent(user -> {
+                addIfAbsent(targetLibCodes, user.getMainLibraryCode());
+                addIfAbsent(targetLibCodes, user.getSubLibraryCode());
+            });
+        }
 
         if (targetLibCodes.isEmpty()) {
             log.warn("[InventoryService] 조회 대상 도서관 코드 없음. isbn={}, userId={}", isbn, userId);

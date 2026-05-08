@@ -17,6 +17,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 
 @Configuration
@@ -57,6 +58,15 @@ public class SecurityConfig {
                 .addFilterBefore(
                         new JwtFilter(jwtUtil, authService),
                         UsernamePasswordAuthenticationFilter.class
+                )
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            if (request.getRequestURI().startsWith("/api/")) {
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "인증이 필요합니다.");
+                            } else {
+                                response.sendRedirect("/login");
+                            }
+                        })
                 );
         return http.build();
     }

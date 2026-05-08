@@ -46,7 +46,12 @@ function DescriptionBlock({ text }) {
         {isLong && (
             <button
                 onClick={() => setExpanded(e => !e)}
-                style={{ background: "none", border: "none", color: C.pink, fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 0 0", fontFamily: "'Noto Sans KR', sans-serif" }}
+                style={{
+                  background: "none", border: "none",
+                  color: C.pink, fontSize: 13, fontWeight: 700,
+                  cursor: "pointer", padding: "6px 0 0",
+                  fontFamily: "'Noto Sans KR', sans-serif",
+                }}
             >
               {expanded ? "접기 ▲" : "더 보기 ▼"}
             </button>
@@ -136,11 +141,6 @@ export default function BookDetailPage() {
             ← 뒤로
           </button>
 
-          {/* ── 홈으로 버튼 ── */}
-          <button style={S.homeBtn} onClick={() => navigate("/main")}>
-            🏠 홈으로
-          </button>
-
           {/* ── 표지 + 기본 정보 ── */}
           <div style={S.topSection}>
             <div style={S.coverBox}>
@@ -159,6 +159,7 @@ export default function BookDetailPage() {
             </div>
           </div>
 
+          {/* ── 줄거리 ── */}
           {book.description && (
               <section style={S.section}>
                 <h2 style={S.sectionTitle}>📖 줄거리</h2>
@@ -166,6 +167,7 @@ export default function BookDetailPage() {
               </section>
           )}
 
+          {/* ── 내 도서관 재고 현황 ── */}
           <section style={S.section}>
             <h2 style={S.sectionTitle}>📍 내 도서관 재고 현황</h2>
 
@@ -197,8 +199,13 @@ export default function BookDetailPage() {
                   {inventory.map((item) => {
                     const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.ERROR;
                     return (
-                        <div key={item.libCode} style={{ ...S.inventoryCard, borderColor: cfg.border, background: cfg.bg }}>
-                          <span style={{ ...S.statusBadge, color: cfg.color }}>{cfg.emoji} {cfg.label}</span>
+                        <div
+                            key={item.libCode}
+                            style={{ ...S.inventoryCard, borderColor: cfg.border, background: cfg.bg }}
+                        >
+                    <span style={{ ...S.statusBadge, color: cfg.color }}>
+                      {cfg.emoji} {cfg.label}
+                    </span>
                           <p style={S.libName}>{item.libName}</p>
                           <p style={S.libCode}>{item.libCode}</p>
                         </div>
@@ -208,7 +215,10 @@ export default function BookDetailPage() {
             )}
 
             {!inventoryLoading && (
-                <button style={S.moreLibBtn} onClick={() => navigate(`/inventory?isbn=${bookId}`)}>
+                <button
+                    style={S.moreLibBtn}
+                    onClick={() => navigate(`/inventory?isbn=${bookId}`)}
+                >
                   🔍 다른 도서관에서도 찾기
                 </button>
             )}
@@ -252,20 +262,18 @@ const S = {
     overflow: "visible",
     paddingBottom: 60,
   },
-  bgDecor: { position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0 },
-  blob:    { position: "absolute", width: 320, height: 320, borderRadius: "50%", opacity: 0.2, filter: "blur(60px)" },
+  bgDecor: {
+    position: "fixed", inset: 0,
+    pointerEvents: "none", overflow: "hidden", zIndex: 0,
+  },
+  blob: {
+    position: "absolute", width: 320, height: 320,
+    borderRadius: "50%", opacity: 0.2, filter: "blur(60px)",
+  },
   backBtn: {
     position: "absolute",
-    top: 16, left: 0,
-    zIndex: 1,
-    background: "none", border: "none",
-    color: C.gray500, fontSize: 14, cursor: "pointer",
-    padding: 0,
-    fontFamily: "'Noto Sans KR', sans-serif",
-  },
-  homeBtn: {
-    position: "absolute",
-    top: 16, right: 0,
+    top: 16,
+    left: 0,
     zIndex: 1,
     background: "none", border: "none",
     color: C.gray500, fontSize: 14, cursor: "pointer",
@@ -286,13 +294,17 @@ const S = {
     borderRadius: 20, padding: "20px",
   },
   coverBox: {
-    flexShrink: 0, width: 90, height: 120, borderRadius: 10,
+    flexShrink: 0,
+    width: 90, height: 120, borderRadius: 10,
     background: C.pinkLight,
     display: "flex", alignItems: "center", justifyContent: "center",
     overflow: "hidden", border: `1.5px solid ${C.pinkLight}`,
   },
   coverImg: { width: "100%", height: "100%", objectFit: "cover" },
-  infoBox:  { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 5 },
+  infoBox: {
+    flex: 1, minWidth: 0,
+    display: "flex", flexDirection: "column", gap: 5,
+  },
   kdcTag:    { fontSize: 10, fontWeight: 800, color: C.purple, letterSpacing: "0.08em" },
   title:     { fontSize: 18, fontWeight: 900, color: C.gray800, margin: 0, lineHeight: 1.35, wordBreak: "keep-all" },
   author:    { fontSize: 13, color: C.gray500, margin: 0 },
@@ -303,8 +315,12 @@ const S = {
     border: `1.5px solid ${C.pinkLight}`,
     borderRadius: 20, padding: "20px",
   },
-  sectionTitle:     { fontSize: 15, fontWeight: 800, color: C.gray800, margin: "0 0 14px" },
-  description:      { fontSize: 14, lineHeight: 1.85, color: C.gray700, margin: 0, wordBreak: "keep-all" },
+  sectionTitle: { fontSize: 15, fontWeight: 800, color: C.gray800, margin: "0 0 14px" },
+  description: {
+    fontSize: 14, lineHeight: 1.85,
+    color: C.gray700, margin: 0,
+    wordBreak: "keep-all",
+  },
   inventoryLoading: { display: "flex", alignItems: "center", gap: 10, padding: "8px 0" },
   inventoryError:   { fontSize: 13, color: C.red, margin: 0 },
   emptyInventory:   { textAlign: "center", padding: "8px 0 4px" },

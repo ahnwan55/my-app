@@ -20,6 +20,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 
+/**
+ * SecurityConfig
+ *
+ * [변경 사항]
+ *   - oauth2Login에 loginPage("/login") 추가
+ *     인증 필요한 API 접근 시 OAuth2가 자동으로 카카오 로그인으로
+ *     리다이렉트하는 문제 해결. /login 페이지로 보내도록 명시.
+ */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -40,7 +48,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 테스트 endpoint 공개
                         .requestMatchers("/chaos-test/**").permitAll()
-                        
+
                         // 기존 공개 endpoint들
                         .requestMatchers(
                                 "/actuator/**",
@@ -51,11 +59,12 @@ public class SecurityConfig {
                                 "/api/libraries/**",
                                 "/api/inventory"
                         ).permitAll()
-                        
+
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")  // 인증 필요 시 /login으로 이동 (OAuth2 자동 리다이렉트 방지)
                         .userInfoEndpoint(userInfo ->
                                 userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2SuccessHandler)
@@ -82,9 +91,9 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(
                 "https://bookjjeok.cloud",
                 "https://www.bookjjeok.cloud",
-		"http://43.200.135.188",
-		"http://localhost",
-		"http://localhost:3000"
+                "http://43.200.135.188",
+                "http://localhost",
+                "http://localhost:3000"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));

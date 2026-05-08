@@ -23,6 +23,9 @@ import java.time.Duration;
  *   - 리다이렉트 URL을 환경변수(APP_REDIRECT_URL)로 분리
  *     EC2 환경: http://43.200.135.188/
  *     K8s 환경: https://bookjjeok.cloud/main
+ *   - 쿠키 Secure 옵션을 환경변수(APP_COOKIE_SECURE)로 분리
+ *     EC2 환경: false (HTTP)
+ *     K8s 환경: true (HTTPS)
  */
 @Component
 @RequiredArgsConstructor
@@ -31,10 +34,12 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
 
-    // EC2 기본값: http://43.200.135.188/
-    // K8s 환경에서는 APP_REDIRECT_URL=https://bookjjeok.cloud/main 으로 주입
     @Value("${app.redirect-url:http://43.200.135.188/}")
     private String redirectUrl;
+
+    // EC2(HTTP): false, K8s(HTTPS): true
+    @Value("${app.cookie-secure:false}")
+    private boolean cookieSecure;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -48,7 +53,6 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String accessToken = jwtUtil.generateAccessToken(kakaoIdStr);
 
         // Refresh Token은 CustomOAuth2UserService에서 이미 DB에 저장됨
-        // 여기서는 DB에서 꺼내어 쿠키에 담음
         String refreshToken = userRepository.findByKakaoId(kakaoId)
                 .map(user -> user.getRefreshToken())
                 .orElseGet(() -> jwtUtil.generateRefreshToken(kakaoIdStr));
@@ -56,8 +60,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         // Access Token 쿠키 (httpOnly: JS 접근 차단, 30분 유효)
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken)
                 .httpOnly(true)
-                .secure(false)        // 배포 시 true로 변경
-                .sameSite("Lax")      // 카카오 리다이렉트 허용을 위해 Lax 사용
+                .secure(cookieSecure)
+                .sameSite("Lax")
                 .maxAge(Duration.ofMinutes(30))
                 .path("/")
                 .build();
@@ -65,7 +69,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         // Refresh Token 쿠키 (7일 유효)
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
-                .secure(false)        // 배포 시 true로 변경
+                .secure(cookieSecure)
                 .sameSite("Lax")
                 .maxAge(Duration.ofDays(7))
                 .path("/")
@@ -78,3 +82,4 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         response.sendRedirect(redirectUrl);
     }
 }
+

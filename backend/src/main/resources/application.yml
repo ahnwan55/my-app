@@ -24,8 +24,10 @@ spring:
       mode: always
   data:
     redis:
-      host: ${REDIS_HOST}
+      host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      connect-timeout: 10000ms
+      timeout: 10000ms
       password: ${REDIS_PASSWORD}
   security:
     oauth2:
@@ -82,6 +84,9 @@ management:
     export:
       prometheus:
         enabled: true
+  health:
+    redis:
+      enabled: false
 
 kakao:
   rest-api-key: ${KAKAO_REST_API_KEY}

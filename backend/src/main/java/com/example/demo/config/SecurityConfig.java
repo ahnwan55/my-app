@@ -38,6 +38,10 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // 테스트 endpoint 공개
+                        .requestMatchers("/chaos-test/**").permitAll()
+                        
+                        // 기존 공개 endpoint들
                         .requestMatchers(
                                 "/actuator/**",
                                 "/api/auth/**",
@@ -45,9 +49,10 @@ public class SecurityConfig {
                                 "/oauth2/**",
                                 "/api/books/**",
                                 "/api/libraries/**",
-                                "/api/inventory",
-                                "/chaos-test/**"
+                                "/api/inventory"
                         ).permitAll()
+                        
+                        // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2

@@ -27,7 +27,7 @@ public class BookRankingService {
     private static final DateTimeFormatter MONTH_FMT =
             DateTimeFormatter.ofPattern("yyyy-MM");
 
-    @Cacheable(value = "popularBooks", key = "'top10'")
+    @Cacheable(cacheNames = "popularBooks", key = "'top10'")
     public BookRankingDto.RankingResponse getRanking() {
         String thisMonth = LocalDate.now().format(MONTH_FMT);
 

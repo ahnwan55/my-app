@@ -1,7 +1,9 @@
 package com.example.demo.config;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.CacheErrorHandler;
@@ -18,10 +20,14 @@ import java.time.Duration;
 @Slf4j
 @Configuration
 @EnableCaching
+@RequiredArgsConstructor
 public class RedisConfig implements CachingConfigurer {
 
+    private final RedisConnectionFactory connectionFactory;
+
     @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+    @Override
+    public RedisCacheManager cacheManager() {
 
         // 도서관 정보 - 24시간
         RedisCacheConfiguration libraryConfig = defaultConfig()
@@ -39,6 +45,7 @@ public class RedisConfig implements CachingConfigurer {
                 .withCacheConfiguration("library", libraryConfig)
                 .withCacheConfiguration("popularBooks", popularBooksConfig)
                 .withCacheConfiguration("persona", personaConfig)
+                .enableStatistics()
                 .build();
     }
 

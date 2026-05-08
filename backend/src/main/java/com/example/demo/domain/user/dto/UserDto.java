@@ -45,7 +45,9 @@ public class UserDto {
             return MeResponse.builder()
                     .userId(user.getUserId())
                     .nickname(user.getNickname())
-                    .profileImage(user.getProfileImage())
+                    .profileImage(user.getProfileImage() != null
+                            ? user.getProfileImage().replace("http://", "https://")
+                            : null)
                     .gender(user.getGender())
                     .ageGroup(user.getAgeGroup())
                     .mainLibraryCode(user.getMainLibraryCode())

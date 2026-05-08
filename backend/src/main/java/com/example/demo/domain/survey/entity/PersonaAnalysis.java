@@ -41,7 +41,7 @@ public class PersonaAnalysis {
     private String personaReason;
 
     // 사용한 Bedrock 모델 ID (예: anthropic.claude-3-5-sonnet-20241022-v2:0)
-    @Column(name = "bedrock_model_id", length = 100)
+    @Column(name = "bedrock_model_id", length = 255)
     private String bedrockModelId;
 
     // Bedrock 원본 응답 전체 (디버깅 및 재분석 대비)

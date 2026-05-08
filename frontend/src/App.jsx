@@ -26,15 +26,15 @@ import BookDetailPage from "./pages/BookDetailPage";
  */
 export default function App() {
     const [surveyAnswers, setSurveyAnswers] = useState({});
-    const [personaCode,   setPersonaCode]   = useState("EXPLORER");
-    const [personaName,   setPersonaName]   = useState("지적 탐험가");
+    const [personaCode, setPersonaCode] = useState("EXPLORER");
+    const [personaName, setPersonaName] = useState("지적 탐험가");
 
-    const [authChecked,    setAuthChecked]    = useState(false);
-    const [isLoggedIn,     setIsLoggedIn]     = useState(false);
+    const [authChecked, setAuthChecked] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [profileChecked, setProfileChecked] = useState(false);
 
     // gender가 null이면 최초 로그인 → UserInfoPage로 이동
-    const [needsProfile,   setNeedsProfile]   = useState(false);
+    const [needsProfile, setNeedsProfile] = useState(false);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -94,11 +94,11 @@ export default function App() {
         <BrowserRouter>
             <Routes>
                 {/* 인증 — 항상 접근 가능 */}
-                <Route path="/"      element={
+                <Route path="/" element={
                     isLoggedIn ? <Navigate to="/main" replace /> : <LoginPage />
                 } />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/main"  element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Main /></Protected>} />
+                <Route path="/main" element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Main /></Protected>} />
 
                 {/*
                   /user-info
@@ -107,23 +107,23 @@ export default function App() {
                   - 프로필 미설정 → UserInfoPage
                 */}
                 <Route path="/user-info" element={
-                    !isLoggedIn   ? <Navigate to="/login" replace /> :
-                    !needsProfile ? <Navigate to="/" replace /> :
-                    <UserInfoPage onComplete={() => setNeedsProfile(false)} />
+                    !isLoggedIn ? <Navigate to="/login" replace /> :
+                        !needsProfile ? <Navigate to="/" replace /> :
+                            <UserInfoPage onComplete={() => setNeedsProfile(false)} />
                 } />
 
                 {/* 보호 라우트 헬퍼 */}
-                <Route path="/main"            element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Main /></Protected>} />
-                <Route path="/survey"      element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Survey setSurveyAnswers={setSurveyAnswers} /></Protected>} />
-                <Route path="/loading"     element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Loading surveyAnswers={surveyAnswers} setPersonaCode={setPersonaCode} setPersonaName={setPersonaName} /></Protected>} />
-                <Route path="/result"      element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Result personaCode={personaCode} /></Protected>} />
+                <Route path="/main" element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Main /></Protected>} />
+                <Route path="/survey" element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Survey setSurveyAnswers={setSurveyAnswers} /></Protected>} />
+                <Route path="/loading" element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Loading surveyAnswers={surveyAnswers} setPersonaCode={setPersonaCode} setPersonaName={setPersonaName} /></Protected>} />
+                <Route path="/result" element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Result personaCode={personaCode} /></Protected>} />
                 <Route path="/book-loading" element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><BookLoading personaName={personaName} /></Protected>} />
-                <Route path="/books"       element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Books personaName={personaName} /></Protected>} />
+                <Route path="/books" element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><Books personaName={personaName} /></Protected>} />
                 <Route path="/books/:bookId" element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><BookDetailPage /></Protected>} />
-                <Route path="/ranking"     element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><RankingPage /></Protected>} />
-                <Route path="/search"      element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><SearchPage /></Protected>} />
-                <Route path="/mypage"      element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><MyPage /></Protected>} />
-                <Route path="/inventory"   element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><InventoryPage /></Protected>} />
+                <Route path="/ranking" element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><RankingPage /></Protected>} />
+                <Route path="/search" element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><SearchPage /></Protected>} />
+                <Route path="/mypage" element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><MyPage /></Protected>} />
+                <Route path="/inventory" element={<Protected isLoggedIn={isLoggedIn} needsProfile={needsProfile}><InventoryPage /></Protected>} />
             </Routes>
         </BrowserRouter>
     );
@@ -136,8 +136,8 @@ export default function App() {
  * - 정상 → children 렌더링
  */
 function Protected({ isLoggedIn, needsProfile, children }) {
-    if (!isLoggedIn)   return <Navigate to="/login"     replace />;
-    if (needsProfile)  return <Navigate to="/user-info" replace />;
+    if (!isLoggedIn) return <Navigate to="/login" replace />;
+    if (needsProfile) return <Navigate to="/user-info" replace />;
     return children;
 }
 

@@ -112,8 +112,13 @@ public class BedrockClient {
                 )
             ));
 
+            String resolvedModelId = modelId;
+            if (modelId != null && modelId.contains("/")) {
+                resolvedModelId = modelId.substring(modelId.lastIndexOf("/") + 1);
+            }
+
             InvokeModelRequest request = InvokeModelRequest.builder()
-                    .modelId(modelId)
+                    .modelId(resolvedModelId)
                     .contentType("application/json")
                     .accept("application/json")
                     .body(SdkBytes.fromUtf8String(requestBody))

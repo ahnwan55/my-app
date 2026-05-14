@@ -61,10 +61,11 @@
 ### AI Server
 | 항목 | 버전 / 라이브러리 |
 |------|-----------------|
-| Core | Python 3.11, FastAPI, Uvicorn |
-| Embeddings | sentence-transformers (SRoBERTa: `jhgan/ko-sroberta-multitask`, 768차원) |
+| Core | Python 3.11, FastAPI 0.135, Uvicorn 0.44 |
+| Embeddings | sentence-transformers 5.x (SRoBERTa: `jhgan/ko-sroberta-multitask`, 768차원) |
 | Database | SQLAlchemy 2 + psycopg2-binary (pgvector 익스텐션 관리) |
 | Monitoring | prometheus-fastapi-instrumentator (HTTP 메트릭 노출) |
+| Tracing | opentelemetry-instrumentation-fastapi + opentelemetry-exporter-otlp |
 
 ### Infrastructure
 | 항목 | 설명 |
@@ -198,7 +199,7 @@ my-app/
 │   ├── src/main/java/com/example/demo/
 │   │   ├── auth/            # OAuth2 인증 (카카오 로그인 + JWT 발급)
 │   │   ├── jwt/             # JWT 필터 + 유틸리티
-│   │   ├── config/          # Security, Bedrock, RestClient 설정
+│   │   ├── config/          # Security, Bedrock, Redis, RestClient, PasswordEncoder, GlobalExceptionHandler 설정
 │   │   ├── domain/
 │   │   │   ├── book/        # 도서 (엔티티, 벡터, 월간인기, CRUD)
 │   │   │   ├── survey/      # 설문 + 페르소나 분석 결과
@@ -206,7 +207,8 @@ my-app/
 │   │   │   ├── recommendation/ # AI 추천 (벡터 검색 + Bedrock 코멘트)
 │   │   │   ├── user/        # 사용자 프로필 관리
 │   │   │   ├── library/     # 도서관 + 장서 보유 엔티티
-│   │   │   └── inventory/   # 장서/대출 현황 조회
+│   │   │   ├── inventory/   # 장서/대출 현황 조회
+│   │   │   └── chaos/       # Chaos Engineering / k6 부하 테스트용 인증 우회 API
 │   │   └── infra/
 │   │       ├── ai/          # AiServerClient (임베딩) + BedrockClient (생성AI)
 │   │       ├── kakao/       # KakaoBookClient (도서 검색)
@@ -219,10 +221,11 @@ my-app/
 │
 ├── ai-server/               # FastAPI 임베딩 서버
 │   ├── app/
-│   │   ├── main.py          # FastAPI 앱 (lifespan: pgvector 활성화, Prometheus 메트릭)
+│   │   ├── main.py          # FastAPI 앱 (lifespan: pgvector 활성화, Prometheus 메트릭, OTel 트레이싱)
 │   │   ├── routers.py       # /embed, /embed/batch 엔드포인트
 │   │   ├── schemas.py       # Pydantic 요청/응답 모델
 │   │   └── database.py      # SQLAlchemy 엔진 + pgvector 확인
+│   ├── models/              # SRoBERTa 모델 캐시 (볼륨 마운트)
 │   ├── Dockerfile
 │   └── requirements.txt
 │

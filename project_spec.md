@@ -5,18 +5,25 @@
 
 ## 2. Architecture & Infrastructure
 
-### Containerization & Deployment (EC2)
+### Containerization & Deployment
 - **Docker**: 멀티 스테이지 빌드를 적용하여 각 서비스(backend, ai-server, frontend)를 이미지화
-- **Docker Compose** (`docker-compose.yml`): EC2 서버에서 5개 서비스를 한 번에 구동
+- **Docker Compose** (`docker-compose.yml`): 로컬 및 EC2 환경에서 5개 서비스를 한 번에 구동
   - `postgres` (PostgreSQL 15), `redis` (Redis 7 Alpine), `backend` (Spring Boot :8080), `ai-server` (FastAPI :8000), `frontend` (React + Nginx :80)
 - **환경 변수**: `backend/.env` 파일로 DB 접속 정보, API 키 등을 주입 (`spring-dotenv` 활용)
 
+### Kubernetes (EKS)
+- **Kustomize** 기반 다중 환경 관리 (`k8s/base/`, `k8s/vpc1-eks/`, `k8s/vpc2-manual/`)
+- **HorizontalPodAutoscaler (HPA)**: backend, ai-server 각각 적용
+- **ExternalSecret**: AWS Secrets Manager 연동으로 민감 정보 관리
+- **Fluent Bit** DaemonSet (`k8s/logging/`): K8s 컨테이너 로그 수집
+- **CI/CD**: GitHub Actions (`.github/workflows/`) — backend/ai-server → ECR, frontend → S3 + CloudFront
+
 ### Web Server / Reverse Proxy
-- **Nginx** (`nginx/nginx.conf`): React SPA 정적 파일 서빙(`try_files`), `/api/`, `/oauth2/`, `/login/` 경로를 EC2 내부 고정 IP(`:8080`)의 Spring Boot 백엔드로 프록시
+- **Nginx** (`nginx/nginx.conf`): React SPA 정적 파일 서빙(`try_files`), `/api/`, `/oauth2/`, `/login/` 경로를 Spring Boot 백엔드(`:8080`)로 프록시
 
 ### Databases & Cache
 - **PostgreSQL 15**: 주 데이터베이스. `pgvector` 확장으로 도서 텍스트의 768차원 임베딩 벡터 저장 및 코사인 유사도 검색 지원
-- **Redis 7**: Spring Data Redis 연동. 캐싱 및 세션 보조 용도
+- **Redis 7**: Spring Data Redis 연동. 인기 도서 랭킹 캐싱 및 세션 보조 용도
 
 ---
 
@@ -24,7 +31,7 @@
 비즈니스 로직, 인증, 데이터 파이프라인(Spring Batch) 및 외부 서비스 통신을 담당하는 메인 API 서버.
 
 - **Language / Framework**: Java 21, Spring Boot 3.4.4, Gradle 8.7
-- **Core Libraries**: Spring Web, Spring Data JPA, QueryDSL 5, Spring Batch, Spring Security, Spring Data Redis
+- **Core Libraries**: Spring Web, Spring Data JPA, QueryDSL 5, Spring Batch, Spring Security, Spring Data Redis, Spring WebFlux (WebClient)
 - **Authentication**: Kakao OAuth2 Client (`/oauth2/authorization/kakao`), JWT (Authorization 헤더 방식, jjwt 0.12.3)
 - **AI Integration**:
   - `software.amazon.awssdk:bedrockruntime` (버전 2.25.11): Claude 모델에 프롬프트를 전송하여 12종의 서브 페르소나 분석 결과(JSON) 파싱 및 추천 도서 코멘트 생성
@@ -44,7 +51,7 @@ backend/src/main/java/com/example/demo/
 ├── DemoApplication.java
 ├── auth/            # OAuth2 인증 (카카오 로그인 + JWT 발급)
 ├── jwt/             # JWT 필터 + 유틸리티
-├── config/          # Security, Bedrock, Redis, RestClient, GlobalExceptionHandler 설정
+├── config/          # Security, Bedrock, Redis, RestClient, PasswordEncoder, GlobalExceptionHandler 설정
 ├── domain/
 │   ├── book/        # 도서 (엔티티, 벡터, 월간인기, CRUD)
 │   ├── survey/      # 설문 + 페르소나 분석 결과
@@ -52,37 +59,18 @@ backend/src/main/java/com/example/demo/
 │   ├── recommendation/ # AI 추천 (벡터 검색 + Bedrock 코멘트)
 │   ├── user/        # 사용자 프로필 관리
 │   ├── library/     # 도서관 + 장서 보유 엔티티
-│   └── inventory/   # 장서/대출 현황 조회
+│   ├── inventory/   # 장서/대출 현황 조회
+│   └── chaos/       # Chaos Engineering / k6 부하 테스트용 인증 우회 API
 └── infra/
     ├── ai/          # AiServerClient (임베딩) + BedrockClient (생성AI)
     ├── kakao/       # KakaoBookClient (도서 검색)
     └── library/     # LibraryApiClient + Spring Batch 동기화
 ```
+
 - **Config**:
   - `application.yml` — 공통 설정 (환경변수 바인딩)
   - `application-local.yml` — 로컬 개발 프로파일
-  - `application-prod.yml` — EC2 운영 프로파일
-
-### 주요 패키지 구조
-```
-backend/src/main/java/com/example/demo/
-├── DemoApplication.java
-├── auth/            # OAuth2 인증 (카카오 로그인 + JWT 발급)
-├── jwt/             # JWT 필터 + 유틸리티
-├── config/          # Security, Bedrock, Redis, RestClient, GlobalExceptionHandler 설정
-├── domain/
-│   ├── book/        # 도서 (엔티티, 벡터, 월간인기, CRUD)
-│   ├── survey/      # 설문 + 페르소나 분석 결과
-│   ├── persona/     # 페르소나 코드/유형 엔티티
-│   ├── recommendation/ # AI 추천 (벡터 검색 + Bedrock 코멘트)
-│   ├── user/        # 사용자 프로필 관리
-│   ├── library/     # 도서관 + 장서 보유 엔티티
-│   └── inventory/   # 장서/대출 현황 조회
-└── infra/
-    ├── ai/          # AiServerClient (임베딩) + BedrockClient (생성AI)
-    ├── kakao/       # KakaoBookClient (도서 검색)
-    └── library/     # LibraryApiClient + Spring Batch 동기화
-```
+  - `application-prod.yml` — 운영 프로파일
 
 ---
 
@@ -113,14 +101,16 @@ backend/src/main/java/com/example/demo/
 
 ---
 
-## 5. AI Server (외부 컨테이너)
+## 5. AI Server (`/ai-server`)
 도서 정보 및 사용자의 텍스트를 벡터로 변환하는 마이크로서비스. Docker Compose의 `ai-server` 서비스로 구동.
 
-- **Language / Framework**: Python 3.11, FastAPI, Uvicorn
-- **Embeddings**: Sentence-Transformers 기반 `jhgan/ko-sroberta-multitask` 모델 사용. 입력 텍스트를 768차원 실수 리스트(벡터)로 변환하여 JSON 배열로 반환
+- **Language / Framework**: Python 3.11, FastAPI 0.135, Uvicorn 0.44
+- **Embeddings**: Sentence-Transformers 5.x 기반 `jhgan/ko-sroberta-multitask` 모델 사용. 입력 텍스트를 768차원 실수 리스트(벡터)로 변환하여 JSON 배열로 반환
 - **Endpoints**: `POST /embed` (단건), `POST /embed/batch` (배치), `GET /health`, `GET /metrics`
-- **Database Context**: `database.py`에서 SQLAlchemy를 사용해 서버 시작 시 DB 접속 후 `CREATE EXTENSION IF NOT EXISTS vector`를 실행해 pgvector를 초기화
-- **Monitoring**: `prometheus-fastapi-instrumentator` — HTTP 요청 latency, throughput, error 메트릭을 `/metrics` 엔드포인트로 노출
+- **Database Context**: `database.py`에서 SQLAlchemy 2를 사용해 서버 시작 시 DB 접속 후 `CREATE EXTENSION IF NOT EXISTS vector`를 실행해 pgvector를 초기화
+- **Monitoring**:
+  - `prometheus-fastapi-instrumentator` — HTTP 요청 latency, throughput, error 메트릭을 `/metrics` 엔드포인트로 노출
+  - `opentelemetry-instrumentation-fastapi` + `opentelemetry-exporter-otlp` — 분산 추적(OTLP Tracing)
 
 ---
 
@@ -152,11 +142,17 @@ backend/src/main/java/com/example/demo/
 - 사용자가 도서를 선택하면 백엔드가 정보나루 API를 통해 서울 지역 공공 도서관의 해당 도서 장서 보유 여부 및 대출 가능 여부를 실시간 조회
 - API 호출 한도 초과 시 결정론적 Mock 데이터(도서관별 입고일 기반 시뮬레이션)로 폴백하여 UI 개발 연속성 보장
 
+### 6. Chaos Engineering / 부하 테스트
+- `ChaosTestController` (`/chaos-test/**`): 인증 없이 핵심 서비스(추천 조회, 설문 제출, 랭킹 조회, 도서 검색)를 호출할 수 있는 우회 엔드포인트
+- Chaos Mesh 또는 k6를 이용한 부하 및 장애 실험 시 OAuth/JWT 의존성 제거를 위해 제공
+
 ---
 
 ## 7. Observability Stack
 | 구성 요소 | 기술 | 엔드포인트 |
-|-----------|------|-----------| 
+|-----------|------|-----------|
 | 백엔드 메트릭 | Micrometer Prometheus | `/actuator/prometheus` |
 | AI 서버 메트릭 | prometheus-fastapi-instrumentator | `/metrics` |
-| 분산 추적 | OpenTelemetry (OTLP) | OTLP Collector로 전송 |
+| 분산 추적 (백엔드) | OpenTelemetry (OTLP) | OTLP Collector로 전송 |
+| 분산 추적 (AI 서버) | opentelemetry-instrumentation-fastapi | OTLP Exporter로 전송 |
+| 로그 수집 | Fluent Bit DaemonSet | K8s 컨테이너 로그 → 중앙 수집 |
